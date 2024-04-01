@@ -1,0 +1,48 @@
+{
+  "name": "rmagent",
+  "version": "0.0.1",
+  "description": "Rack Manage CLI agent for monitoring and interacting with on-premises equipment",
+  "main": "./build/index.js",
+  "bin": "./build/index.js",
+  "author": "Rack Manage",
+  "engines": {
+    "node": ">=18.0.0 <=18.5.0"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "cli-table3": "^0.6.4",
+    "commander": "^12.0.0",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-copy": "^2.1.1",
+    "firebase": "^10.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "needle": "^3.3.1",
+    "ping-monitor": "^0.8.2",
+    "pkg": "^5.8.1",
+    "promptly": "^3.2.0"
+  },
+  "scripts": {
+    "prebuild": "node esbuild.config.js",
+    "build:all": "npm run prebuild && pkg package.json --compress Gzip",
+    "build": "pkg package.json --targets host  --compress Gzip"
+  },
+  "pkg": {
+    "targets": [
+      "node18-macos-x64",
+      "node18-macos-arm64",
+      "node18-linux-x64",
+      "node18-linux-arm64",
+      "node18-win-x64",
+      "node18-win-arm64"
+    ],
+    "assets": [
+      "io.rackmanage.rmagent.plist.tpl",
+      "rmagent-system.service.tpl",
+      "rmagent-user.service.tpl",
+      "node_modules/sqlite3/build/Release/node_sqlite3.node"
+    ],
+    "outputPath": "dist"
+  }
+}
