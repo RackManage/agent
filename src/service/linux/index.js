@@ -4,7 +4,7 @@ const fs = require("fs");
 const util = require('util');
 const { exec } = require("child_process");
 const execPromise = util.promisify(exec);
-const { dataPath, findDatabasePath, dbName } = require("../db/paths");
+const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
 
 const systemServicePath = "/etc/systemd/system";
 const userServicePath = path.join(os.homedir(), ".config/systemd/user");

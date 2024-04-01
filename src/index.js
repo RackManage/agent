@@ -193,10 +193,15 @@ program
     "The action to perform (start, stop, install, uninstall)"
   )
   .option(
-    "-t, --trigger",
-    "When to trigger the service (login, boot). Root permissions required for boot trigger."
+    "-t, --trigger <trigger>",
+    `When to trigger the service (login, boot). ${os.platform() === "win32" ? "Admin" : "Sudo"} permissions required for boot trigger.`
   )
-  .action(async (action) => {
+  .option("-f, --force", "Force the action without confirmation")
+  .action(async (action, options) => {
+    let db = await openOrCreateDatabase();
+    if (!(await checkAndRefreshToken(db))) return;
+    db.close();
+
     const { manageService } = require("./service");
 
     if (action === "start") {
@@ -204,7 +209,8 @@ program
     } else if (action === "stop") {
       await manageService("stop");
     } else if (action === "install") {
-      let trigger = action.trigger;
+      let trigger = options.trigger;
+
       while (trigger !== "login" && trigger !== "boot") {
         console.log("");
         trigger = await promptly.prompt(
@@ -217,15 +223,9 @@ program
         }
       }
 
-      if (trigger === "boot") {
-        if (os.userInfo().uid !== 0) {
-          program.error(
-            "To install the service to start at boot, you must run this command as sudo."
-          );
-        }
-
+      if (trigger === "boot" && !options.force) {
         console.log(
-          "\nNote: When installing the service to start at boot, you must run all future commands as sudo."
+          `\nNote: When installing the service to start at boot, you must run all future commands as ${os.platform() === "win32" ? "admin" : "sudo"}.`
         );
         let confirm = await promptly.confirm(
           "Are you sure you want to continue? (y/n): "

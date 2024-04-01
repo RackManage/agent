@@ -1,6 +1,6 @@
 const os = require("os");
 const path = require("path");
-const { dataPath, findDatabasePath, dbName } = require("../db/paths");
+const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
 const util = require("util");
 const { exec } = require("child_process");
 const execPromise = util.promisify(exec);
@@ -9,7 +9,7 @@ const fsPromises = fs.promises;
 const {
   migrateDatabaseToUserLocation,
   migrateDatabaseToSystemLocation,
-} = require("../db");
+} = require("../../db");
 
 const launchDaemonsPath = path.join("/", "Library", "LaunchDaemons");
 const launchAgentsPath = path.join(os.homedir(), "Library", "LaunchAgents");

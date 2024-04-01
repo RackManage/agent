@@ -13,9 +13,11 @@ esbuild.build({
   plugins: [
     copy({
       assets: [
-        { from: ['src/service/io.rackmanage.rmagent.plist.tpl'], to: './' },
-        { from: ['src/service/rmagent-system.service.tpl'], to: './' },
-        { from: ['src/service/rmagent-user.service.tpl'], to: './' },
+        { from: ['src/service/macos/io.rackmanage.rmagent.plist.tpl'], to: './' },
+        { from: ['src/service/linux/rmagent-system.service.tpl'], to: './' },
+        { from: ['src/service/linux/rmagent-user.service.tpl'], to: './' },
+        { from: ['src/service/windows/rmservice.xml'], to: './' },
+        { from: ['src/service/windows/rmservice.exe'], to: './'}
       ],
     }),
   ],

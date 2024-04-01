@@ -4,22 +4,31 @@ const os = require("os");
 const path = require("path");
 const { dataPath, findDatabasePath, dbName } = require("./paths");
 
+function deleteWithRetry(filePath, maxRetries = 5, interval = 100, attempt = 0) {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (error) {
+    if (attempt < maxRetries) {
+      setTimeout(() => deleteWithRetry(filePath, maxRetries, interval, attempt + 1), interval);
+    } else {
+      console.error("Unable to delete file:", error);
+    }
+  }
+}
+
 function migrateDatabaseToUserLocation() {
   let { userPath, systemPath } = dataPath();
 
   // If the database is not in the user path then copy it there
   if (findDatabasePath() !== path.join(userPath, dbName)) {
-    if (os.userInfo().uid !== 0) {
-      console.error("Please run this command as sudo");
-      return;
-    }
-    
     if (fs.existsSync(path.join(systemPath, dbName))) {
       fs.copyFileSync(path.join(systemPath, dbName), path.join(userPath, dbName));
 
       // If file copied successfully then remove the original
       if (fs.existsSync(path.join(userPath, dbName))) {
-        fs.unlinkSync(path.join(systemPath, dbName));
+        deleteWithRetry(path.join(systemPath, dbName));
       } else {
         console.error("Error migrating database. Please check permissions.");
       }
@@ -32,17 +41,12 @@ function migrateDatabaseToSystemLocation() {
 
   // If the database is not in the system path then copy it there
   if (findDatabasePath() !== path.join(systemPath, dbName)) {
-    if (os.userInfo().uid !== 0) {
-      console.error("Please run this command as sudo");
-      return;
-    }
-
     if (fs.existsSync(path.join(userPath, dbName))) {
       fs.copyFileSync(path.join(userPath, dbName), path.join(systemPath, dbName));
       
       // If file copied successfully then remove the original
       if (fs.existsSync(path.join(systemPath, dbName))) {
-        fs.unlinkSync(path.join(userPath, dbName));
+        deleteWithRetry(path.join(userPath, dbName));
       } else {
         console.error("Error migrating database. Please check permissions.");
       }
