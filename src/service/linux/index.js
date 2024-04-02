@@ -1,43 +1,60 @@
 const os = require("os");
 const path = require("path");
-const fs = require("fs");
+const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
 const util = require('util');
 const { exec } = require("child_process");
 const execPromise = util.promisify(exec);
-const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
+const fs = require("fs");
+const fsPromises = fs.promises;
+const {
+  migrateDatabaseToUserLocation,
+  migrateDatabaseToSystemLocation,
+} = require("../../db");
 
 const systemServicePath = "/etc/systemd/system";
 const userServicePath = path.join(os.homedir(), ".config/systemd/user");
 
 async function installService(mode) {
-  
+  let { userPath, systemPath } = dataPath();
+
   try {
     let serviceFilePath;
     let executableTargetPath;
     
-    if (mode === "user") {
-        let serviceData = fs.readFileSync(path.join(__dirname, "rmagent-user.service.tpl"));
-
+    if (mode === "login") {
         // Create the user data directory if it doesn't exist
-        if (!fs.existsSync(userServicePath)) {
-            fs.mkdirSync(userServicePath, { recursive: true });
+        if (!fs.existsSync(userPath)) {
+            fs.mkdirSync(userPath, { recursive: true });
         }
 
+        // Create the service directory if it doesn't exist
+        if (!fs.existsSync(userServicePath)) {
+          fs.mkdirSync(userServicePath, { recursive: true });
+      }
+
         // Copy the current executable to the user data directory
-        executableTargetPath = path.join(userServicePath, "rmagent");
-        fs.copyFileSync(process.argv[0], executableTargetPath);
+        fs.copyFileSync(process.argv[0], path.join(userPath, "rmagent"));
 
-        // Replace placeholders in the service file
-        serviceData = serviceData.toString().replace(/{{DATA_DIR}}/g, userServicePath);
+        // Create the service file
+        let serviceData = fs.readFileSync(
+          path.join(__dirname, "rmagent-user.service.tpl")
+        );
 
-        // Write the service file to user systemd directory
-        serviceFilePath = path.join(userServicePath, "rmagent.service");
-        fs.writeFileSync(serviceFilePath, serviceData);
+        // Replace placeholder data with the actual path
+        serviceData = serviceData.toString().replace(/{{DATA_DIR}}/g, userPath);
+
+        // Write the service file
+        fs.writeFileSync(
+          path.join(userServicePath, "rmagent.service"), 
+          serviceData
+        );
 
         // Reload user systemd daemon and enable the service
         await execPromise("systemctl --user daemon-reload");
         await execPromise(`systemctl --user enable rmagent.service`);
         await execPromise(`systemctl --user start rmagent.service`);
+
+        migrateDatabaseToUserLocation();
 
         console.log("Service installed");
     } else {
@@ -110,14 +127,25 @@ async function uninstallService() {
       
       console.log("Service uninstalled");
     } else {
-      // Check if service is already loaded
-      let { stdout } = await execPromise(`systemctl --user list-units | grep rmagent.service`);
-      if (stdout) {
-        // Unload the service
-        await execPromise(`systemctl --user stop rmagent.service`);
+      if (!fs.existsSync(path.join(userServicePath, "rmagent.service"))) {
+        console.log("Service not installed");
+        return;
+      }
+
+      // Check if service is running
+      try {
+        let { stdout, stderr } = await execPromise(`systemctl --user list-units | grep rmagent.service`);
+        if (stdout) {
+          // Stop the service
+          await execPromise(`systemctl --user stop rmagent.service`);
+          await execPromise(`systemctl --user disable rmagent.service`);
+          await execPromise(`systemctl --user daemon-reload`);
+        }
+      } catch (err) {
         await execPromise(`systemctl --user disable rmagent.service`);
         await execPromise(`systemctl --user daemon-reload`);
       }
+      
 
       // Remove the service file
       if (fs.existsSync(path.join(userServicePath, "rmagent.service"))) {
@@ -125,9 +153,11 @@ async function uninstallService() {
       }
 
       // Remove the executable
-      if (fs.existsSync(path.join(userServicePath, "rmagent"))) {
-        fs.unlinkSync(path.join(userServicePath, "rmagent"));
+      if (fs.existsSync(path.join(userPath, "rmagent"))) {
+        fs.unlinkSync(path.join(userPath, "rmagent"));
       }
+
+      migrateDatabaseToUserLocation();
 
       console.log("Service uninstalled");
     }

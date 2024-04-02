@@ -21,7 +21,7 @@ function dataPath() {
       break;
     case "linux":
       userPath = path.join(os.homedir(), ".RackManage");
-      systemPath = path.join("/usr/local/var", "RackManage");
+      systemPath = path.join("/var/lib", "RackManage");
       break;
   }
 
