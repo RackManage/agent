@@ -13,7 +13,7 @@ const {
 const {
   isAdmin,
   serviceInstalled,
-} = require("./index");
+} = require("../helpers");
 
 async function installService(mode) {
   let { userPath, systemPath } = dataPath();
@@ -109,7 +109,7 @@ async function uninstallService() {
   }
 
   let { userPath, systemPath } = dataPath();
-  let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
+  let mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
   if (!(await isAdmin()) && mode !== "login") {
     console.error("Please run this command as root");
@@ -119,6 +119,11 @@ async function uninstallService() {
   try {
     if (mode === "login") {
       // Remove the service from the registry
+      let regKey = new Registry({
+        hive: Registry.HKCU,
+        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      });
+      
       regKey.remove("RackManage", (err) => {
         if (err) {
           console.error(err);
@@ -191,9 +196,9 @@ async function startService() {
 
   try {
     let { systemPath } = dataPath();
-    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
+    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
-    if (mode === "system") {
+    if (mode === "boot") {
       // Check if service is already installed
       let { stdout, stderr } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" status`);
 
@@ -235,9 +240,9 @@ async function stopService() {
 
   try {
     let { systemPath } = dataPath();
-    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
+    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
-    if (mode === "system") {
+    if (mode === "boot") {
       // Check if service is already installed
       let { stdout, stderr } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" status`);
         

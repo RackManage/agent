@@ -58,23 +58,14 @@ function migrateDatabaseToSystemLocation() {
 }
 
 async function openOrCreateDatabase(dbPath = findDatabasePath()) {
-  let { systemPath, userPath } = dataPath();
+  let { systemPath } = dataPath();
   if (dbPath.startsWith(systemPath)) {
     if (!(await isAdmin())) {
       console.error("Please run this command as root");
       exit(1);
     }
   } else {
-    const dir = path.dirname(dbPath);
-    if (fs.existsSync(dir) && await isAdmin() && dbPath.startsWith(userPath)) {
-      const { uid, gid } = await getEffectiveUidGid();
-      await fsPromises.chown(dir, uid, gid);
-    }
-
-    if (fs.existsSync(dbPath) && await isAdmin() && dbPath.startsWith(userPath)) {
-      const { uid, gid } = await getEffectiveUidGid();
-      await fsPromises.chown(dbPath, uid, gid);
-    }
+    await chownDb(dbPath);
   }
 
   return new Promise((resolve, reject) => {
@@ -94,7 +85,11 @@ async function openOrCreateDatabase(dbPath = findDatabasePath()) {
   });
 }
 
-async function closeDb(db, dbPath = findDatabasePath()) {
+async function chownDb(dbPath = findDatabasePath()) {
+  if (os.platform() !== "linux" && os.platform() !== "darwin") {
+    return;
+  }
+
   let { userPath } = dataPath();
   const dir = path.dirname(dbPath);
   
@@ -107,7 +102,10 @@ async function closeDb(db, dbPath = findDatabasePath()) {
     const { uid, gid } = await getEffectiveUidGid();
     await fsPromises.chown(dbPath, uid, gid);
   }
+}
 
+async function closeDb(db, dbPath = findDatabasePath()) {
+  await chownDb(dbPath);
   db.close();
 }
 
