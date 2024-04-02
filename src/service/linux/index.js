@@ -40,15 +40,15 @@ async function uninstallService() {
     await uninstall(
       "rmagent.service",
       [
-        "sudo systemctl stop rmagent.service || true",
-        "sudo systemctl disable rmagent.service",
-        "sudo systemctl daemon-reload"
-      ],
-      [
         "systemctl --user stop rmagent.service || true",
         "systemctl --user disable rmagent.service",
         "systemctl --user daemon-reload"
-      ]
+      ],
+      [
+        "sudo systemctl stop rmagent.service || true",
+        "sudo systemctl disable rmagent.service",
+        "sudo systemctl daemon-reload"
+      ], 
     )
   } catch (err) {
     console.error(err);

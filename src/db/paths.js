@@ -20,7 +20,11 @@ function dataPath() {
       systemPath = path.join("/", "Library", "Application Support", "RackManage");
       break;
     case "linux":
-      userPath = path.join(os.homedir(), ".RackManage");
+      if (os.userInfo().uid === 0 && process.env.SUDO_USER) {
+        userPath = path.join("/home", process.env.SUDO_USER, ".config", "RackManage");
+      } else {
+        userPath = path.join(os.homedir(), ".config", "RackManage");
+      }
       systemPath = path.join("/var/lib", "RackManage");
       break;
   }

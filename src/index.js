@@ -2,6 +2,7 @@ const { program } = require("commander");
 const promptly = require("promptly");
 const {
   openOrCreateDatabase,
+  closeDb,
   getConfigData,
   addServer,
   getServers,
@@ -55,7 +56,7 @@ program
 
     console.log(table.toString());
 
-    db.close();
+    await closeDb(db);
   });
 
 program
@@ -86,7 +87,7 @@ program
 
     await addServer(db, data);
 
-    db.close();
+    await closeDb(db);
 
     console.log("Server added successfully.");
   });
@@ -111,7 +112,7 @@ program
       return;
     }
 
-    db.close();
+    await closeDb(db);
   });
 
 program
@@ -122,7 +123,7 @@ program
     if (!(await checkAndRefreshToken(db))) return;
     await logout();
 
-    db.close();
+    await closeDb(db);
   });
 
 program
@@ -144,7 +145,7 @@ program
 
   if (!serverData) {
     console.error("Server not found.");
-    db.close();
+    await closeDb(db);
     return;
   }
 
@@ -171,7 +172,7 @@ program
 
   await addCredentials(db, ipmiData);
 
-  db.close();
+  await closeDb(db);
 
   console.log("IPMI credentials added successfully.");
 });
@@ -223,7 +224,7 @@ program
 
     console.log(table.toString());
 
-    db.close();
+    await closeDb(db);
   });
 
 program
@@ -236,7 +237,7 @@ program
   const { startMonitoring } = require("./service/ping");
   startMonitoring();
 
-  db.close();
+  await closeDb(db, (options && options.path) || undefined);
 });
 
 program
@@ -254,7 +255,7 @@ program
   .action(async (action, options) => {
     let db = await openOrCreateDatabase();
     if (!(await checkAndRefreshToken(db))) return;
-    db.close();
+    await closeDb(db);
 
     const { manageService } = require("./service");
 

@@ -1,4 +1,4 @@
-const { getConfigData, openOrCreateDatabase } = require("../db");
+const { getConfigData, openOrCreateDatabase, closeDb } = require("../db");
 const { auth } = require("./firebaseConfig");
 const needle = require('needle');
 
@@ -21,7 +21,7 @@ async function initAgent() {
   }, 
   { json: true });
 
-  sqliteDB.close();
+  await closeDb(sqliteDB);
 }
 
 async function deleteAgent() {
@@ -36,7 +36,7 @@ async function deleteAgent() {
 
   await needle('delete', `https://rmagent.firebaseio.com/users/${auth.currentUser.uid}/agents/${clientId}.json?auth=${authToken}`);
 
-  sqliteDB.close();
+  await closeDb(sqliteDB);
 }
 
 async function updateStatus(status) {
@@ -60,7 +60,7 @@ async function updateStatus(status) {
   }, 
   { json: true });
 
-  sqliteDB.close();
+  await closeDb(sqliteDB);
 }
 
 module.exports = {

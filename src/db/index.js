@@ -1,9 +1,10 @@
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
+const fsPromises = fs.promises;
 const os = require("os");
 const path = require("path");
 const { dataPath, findDatabasePath, dbName } = require("./paths");
-const { isAdmin } = require("../service/helpers");
+const { isAdmin, getEffectiveUidGid } = require("../service/helpers");
 const { exit } = require("process");
 
 function deleteWithRetry(filePath, maxRetries = 5, interval = 100, attempt = 0) {
@@ -57,11 +58,22 @@ function migrateDatabaseToSystemLocation() {
 }
 
 async function openOrCreateDatabase(dbPath = findDatabasePath()) {
-  let { systemPath } = dataPath();
+  let { systemPath, userPath } = dataPath();
   if (dbPath.startsWith(systemPath)) {
     if (!(await isAdmin())) {
       console.error("Please run this command as root");
       exit(1);
+    }
+  } else {
+    const dir = path.dirname(dbPath);
+    if (fs.existsSync(dir) && await isAdmin() && dbPath.startsWith(userPath)) {
+      const { uid, gid } = await getEffectiveUidGid();
+      await fsPromises.chown(dir, uid, gid);
+    }
+
+    if (fs.existsSync(dbPath) && await isAdmin() && dbPath.startsWith(userPath)) {
+      const { uid, gid } = await getEffectiveUidGid();
+      await fsPromises.chown(dbPath, uid, gid);
     }
   }
 
@@ -76,10 +88,27 @@ async function openOrCreateDatabase(dbPath = findDatabasePath()) {
         console.error("Could not open database", err);
         reject(err);
       } else {
-        initializeDatabase(db).then(() => resolve(db));
+        initializeDatabase(db).then(async () => resolve(db));
       }
     });
   });
+}
+
+async function closeDb(db, dbPath = findDatabasePath()) {
+  let { userPath } = dataPath();
+  const dir = path.dirname(dbPath);
+  
+  if (fs.existsSync(dir) && await isAdmin() && dbPath.startsWith(userPath)) {
+    const { uid, gid } = await getEffectiveUidGid();
+    await fsPromises.chown(dir, uid, gid);
+  }
+
+  if (fs.existsSync(dbPath) && await isAdmin() && dbPath.startsWith(userPath)) {
+    const { uid, gid } = await getEffectiveUidGid();
+    await fsPromises.chown(dbPath, uid, gid);
+  }
+
+  db.close();
 }
 
 function initializeDatabase(db) {
@@ -207,6 +236,7 @@ function getConfigData(db, key) {
 
 module.exports = {
   openOrCreateDatabase,
+  closeDb,
   addServer,
   getServers,
   setConfigData,

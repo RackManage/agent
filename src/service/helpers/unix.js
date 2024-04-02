@@ -32,7 +32,16 @@ async function install(serviceTemplate, serviceFileName, loadCommands, mode) {
     return;
   }
 
-  // Create the system data directory if it doesn't exist
+  // Create the data directory if it doesn't exist
+  if (
+    !fs.existsSync(mode === "login" ? userPath : systemPath)
+  ) {
+    fs.mkdirSync(mode === "login" ? userPath : systemPath, {
+      recursive: true,
+    });
+  }
+
+  // Create the service directory if it doesn't exist
   if (
     !fs.existsSync(mode === "login" ? userServicePath() : systemServicePath())
   ) {
@@ -144,7 +153,7 @@ async function uninstall(
   console.log("Service uninstalled");
 }
 
-async function runCommands(useCommands, systemCommands) {
+async function runCommands(userCommands, systemCommands) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
@@ -163,7 +172,7 @@ async function runCommands(useCommands, systemCommands) {
       await execPromise(command);
     }
   } else { 
-    for (const command of useCommands) {
+    for (const command of userCommands) {
       await execPromise(command);
     }
   }
