@@ -5,6 +5,8 @@ const {
   getConfigData,
   addServer,
   getServers,
+  getServer,
+  addCredentials,
 } = require("./db");
 
 const {
@@ -124,6 +126,57 @@ program
   });
 
 program
+.command("ipmi", { hidden: true })
+.description("Set the IPMI credentials for a server")
+.option("-s, --server <server>", "The server to set the IPMI credentials for")
+.option("-a, --address <address>", "The IPMI address")
+.option("-u, --username <username>", "The IPMI username")
+.action(async (options) => {
+  let db = await openOrCreateDatabase();
+  if (!(await checkAndRefreshToken(db))) return;
+
+  let server;
+  if (!options.server) {
+    server = await promptly.prompt("Enter the server to set the IPMI credentials for: ");
+  }
+
+  let serverData = await getServer(db, options.server || server);
+
+  if (!serverData) {
+    console.error("Server not found.");
+    db.close();
+    return;
+  }
+
+  let ipmiAddress = options.address || (await promptly.prompt("Enter the IPMI address: "));
+  let ipmiUsername = options.username || (await promptly.prompt("Enter the IPMI username: "));
+  let ipmiPassword = await promptly.password("Enter the IPMI password: ");
+
+  console.log("\n");
+
+  const keytar = require("keytar");
+
+  let serverId = crypto.randomUUID();
+  let accountId = "rackmanage_" + crypto.randomUUID();
+
+  await keytar.setPassword("rackmanage", accountId, ipmiPassword);
+
+  let ipmiData = {
+    id: serverId,
+    server: server,
+    address: ipmiAddress,
+    username: ipmiUsername,
+    credential: accountId,
+  };
+
+  await addCredentials(db, ipmiData);
+
+  db.close();
+
+  console.log("IPMI credentials added successfully.");
+});
+
+program
   .command("status")
   .description("Check the status of the agent")
   .action(async () => {
@@ -173,7 +226,8 @@ program
     db.close();
   });
 
-program.command("start-monitoring", { hidden: true })
+program
+.command("start-monitoring", { hidden: true })
 .option("-p, --path <path>", "Path to the database")
 .action(async (options) => {
   let db = await openOrCreateDatabase((options && options.path) || undefined);

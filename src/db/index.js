@@ -100,6 +100,21 @@ function initializeDatabase(db) {
           resolve();
         }
       });
+
+      db.run(`CREATE TABLE IF NOT EXISTS ipmi (
+        id TEXT PRIMARY KEY NOT NULL,
+        server TEXT KEY NOT NULL,
+        address TEXT NOT NULL,
+        username TEXT,
+        credential TEXT
+      )`, [], (err) => {
+        if (err) {
+          console.error("Error creating ipmi table", err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   });
 }
@@ -124,6 +139,32 @@ function getServers(db) {
         reject(err);
       } else {
         resolve(rows);
+      }
+    });
+  });
+}
+
+function getServer(db, server) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT id, server, name, interval, port, mode FROM servers WHERE server = ?`, [server], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+
+}
+
+function addCredentials(db, ipmi) {
+  return new Promise((resolve, reject) => {
+    db.run(`REPLACE INTO ipmi (id, server, address, username, credential) VALUES (?, ?, ?, ?, ?)`, [ipmi.id, ipmi.server, ipmi.address, ipmi.username, ipmi.credential], (err) => {
+      if (err) {
+        console.error("Error adding IPMI credentials", err);
+        reject(err);
+      } else {
+        resolve();
       }
     });
   });
@@ -162,4 +203,6 @@ module.exports = {
   getConfigData,
   migrateDatabaseToSystemLocation,
   migrateDatabaseToUserLocation,
+  getServer,
+  addCredentials,
 };

@@ -9,6 +9,7 @@ esbuild.build({
   outfile: 'build/index.js',
   external: [
     "sqlite3",
+    "keytar"
   ],
   plugins: [
     copy({

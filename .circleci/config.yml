@@ -1,0 +1,39 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.2
+  gh: circleci/github-cli@2.0
+
+jobs:
+  build-x64:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: echo "Building x64"
+      - checkout
+      - node/install:
+          node-version: '18' 
+      - node/install-packages
+      - run:
+          name: build
+          command: npm run build
+
+  build-arm:
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.medium
+    steps:
+      - run: echo "Building ARM"
+      - checkout
+      - node/install:
+          node-version: '18' 
+      - node/install-packages
+      - run:
+          name: build
+          command: npm run build
+
+workflows:
+  build:
+    jobs:
+      - build-x64
+      - build-arm
