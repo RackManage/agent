@@ -3,6 +3,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { dataPath, findDatabasePath, dbName } = require("./paths");
+const { isAdmin } = require("../service/helpers");
+const { exit } = require("process");
 
 function deleteWithRetry(filePath, maxRetries = 5, interval = 100, attempt = 0) {
   try {
@@ -54,7 +56,15 @@ function migrateDatabaseToSystemLocation() {
   }
 }
 
-function openOrCreateDatabase(dbPath = findDatabasePath()) {
+async function openOrCreateDatabase(dbPath = findDatabasePath()) {
+  let { systemPath } = dataPath();
+  if (dbPath.startsWith(systemPath)) {
+    if (!(await isAdmin())) {
+      console.error("Please run this command as root");
+      exit(1);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {

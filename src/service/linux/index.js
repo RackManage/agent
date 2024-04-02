@@ -1,93 +1,34 @@
-const os = require("os");
-const path = require("path");
-const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
-const util = require('util');
-const { exec } = require("child_process");
-const execPromise = util.promisify(exec);
-const fs = require("fs");
-const fsPromises = fs.promises;
 const {
-  migrateDatabaseToUserLocation,
-  migrateDatabaseToSystemLocation,
-} = require("../../db");
-
-const systemServicePath = "/etc/systemd/system";
-const userServicePath = path.join(os.homedir(), ".config/systemd/user");
+  install,
+  uninstall,
+  runCommands,
+} = require("../helpers/unix");
+const path = require("path");
 
 async function installService(mode) {
-  let { userPath, systemPath } = dataPath();
-
   try {
-    let serviceFilePath;
-    let executableTargetPath;
-    
     if (mode === "login") {
-        // Create the user data directory if it doesn't exist
-        if (!fs.existsSync(userPath)) {
-            fs.mkdirSync(userPath, { recursive: true });
-        }
-
-        // Create the service directory if it doesn't exist
-        if (!fs.existsSync(userServicePath)) {
-          fs.mkdirSync(userServicePath, { recursive: true });
-      }
-
-        // Copy the current executable to the user data directory
-        fs.copyFileSync(process.argv[0], path.join(userPath, "rmagent"));
-
-        // Create the service file
-        let serviceData = fs.readFileSync(
-          path.join(__dirname, "rmagent-user.service.tpl")
-        );
-
-        // Replace placeholder data with the actual path
-        serviceData = serviceData.toString().replace(/{{DATA_DIR}}/g, userPath);
-
-        // Write the service file
-        fs.writeFileSync(
-          path.join(userServicePath, "rmagent.service"), 
-          serviceData
-        );
-
-        // Reload user systemd daemon and enable the service
-        await execPromise("systemctl --user daemon-reload");
-        await execPromise(`systemctl --user enable rmagent.service`);
-        await execPromise(`systemctl --user start rmagent.service`);
-
-        migrateDatabaseToUserLocation();
-
-        console.log("Service installed");
+      await install(
+        path.join(__dirname, "rmagent-user.service.tpl"),
+        "rmagent.service",
+        [
+          "systemctl --user daemon-reload",
+          "systemctl --user enable rmagent.service",
+          "systemctl --user start rmagent.service"
+        ],
+        mode
+      )
     } else {
-      // Make sure we're running as root
-      if (os.userInfo().uid !== 0) {
-        console.error("Please run this command as root");
-        return;
-      }
-
-      let serviceData = fs.readFileSync(path.join(__dirname, "rmagent-system.service.tpl"));
-      
-      // Create the system data directory if it doesn't exist
-      if (!fs.existsSync(systemServicePath)) {
-        fs.mkdirSync(systemServicePath, { recursive: true });
-      }
-
-      // Copy the current executable to the system data directory
-      executableTargetPath = path.join(systemServicePath, "rmagent");
-      fs.copyFileSync(process.argv[0], executableTargetPath);
-      
-      // Replace placeholders in the service file
-      serviceData = serviceData.toString().replace(/{{DATA_DIR}}/g, executableTargetPath);
-      
-      // Write the service file to systemd directory
-      serviceFilePath = path.join(systemServicePath, "rmagent.service");
-      fs.writeFileSync(serviceFilePath, serviceData);
-
-      // Reload systemd daemon and enable the service
-      await execPromise("sudo systemctl daemon-reload");
-      await execPromise(`sudo systemctl enable rmagent.service`);
-      await execPromise(`sudo systemctl start rmagent.service`);
-
-      console.log("Service installed");
+      await install(
+        path.join(__dirname, "rmagent-system.service.tpl"),
+        "rmagent.service",
+        [
+          "sudo systemctl daemon-reload",
+          "sudo systemctl enable rmagent.service",
+          "sudo systemctl start rmagent.service"
+        ],
+        mode
+      )
     }
   } catch (err) {
     console.error(err);
@@ -96,71 +37,19 @@ async function installService(mode) {
 
 async function uninstallService() {
   try {
-    // If the database is in the system path then we are running in system mode
-    let { userPath, systemPath } = dataPath();
-
-    if (findDatabasePath() === path.join(systemPath, dbName)) {
-      // Make sure we're running as root
-      if (os.userInfo().uid !== 0) {
-        console.error("Please run this command as sudo");
-        return;
-      }
-
-      // Check if service is already loaded
-      let { stdout } = await execPromise(`sudo systemctl list-units | grep rmagent.service`);
-      if (stdout) {
-        // Stop the service
-        await execPromise(`sudo systemctl stop rmagent.service`);
-        await execPromise(`sudo systemctl disable rmagent.service`);
-        await execPromise(`sudo systemctl daemon-reload`);
-      }
-
-      // Remove the service file
-      if (fs.existsSync(path.join(systemServicePath, "rmagent.service"))) {
-        fs.unlinkSync(path.join(systemServicePath, "rmagent.service"));
-      }
-
-      // Remove the executable
-      if (fs.existsSync(path.join(systemServicePath, "rmagent"))) {
-        fs.unlinkSync(path.join(systemServicePath, "rmagent"));
-      }
-      
-      console.log("Service uninstalled");
-    } else {
-      if (!fs.existsSync(path.join(userServicePath, "rmagent.service"))) {
-        console.log("Service not installed");
-        return;
-      }
-
-      // Check if service is running
-      try {
-        let { stdout, stderr } = await execPromise(`systemctl --user list-units | grep rmagent.service`);
-        if (stdout) {
-          // Stop the service
-          await execPromise(`systemctl --user stop rmagent.service`);
-          await execPromise(`systemctl --user disable rmagent.service`);
-          await execPromise(`systemctl --user daemon-reload`);
-        }
-      } catch (err) {
-        await execPromise(`systemctl --user disable rmagent.service`);
-        await execPromise(`systemctl --user daemon-reload`);
-      }
-      
-
-      // Remove the service file
-      if (fs.existsSync(path.join(userServicePath, "rmagent.service"))) {
-        fs.unlinkSync(path.join(userServicePath, "rmagent.service"));
-      }
-
-      // Remove the executable
-      if (fs.existsSync(path.join(userPath, "rmagent"))) {
-        fs.unlinkSync(path.join(userPath, "rmagent"));
-      }
-
-      migrateDatabaseToUserLocation();
-
-      console.log("Service uninstalled");
-    }
+    await uninstall(
+      "rmagent.service",
+      [
+        "sudo systemctl stop rmagent.service || true",
+        "sudo systemctl disable rmagent.service",
+        "sudo systemctl daemon-reload"
+      ],
+      [
+        "systemctl --user stop rmagent.service || true",
+        "systemctl --user disable rmagent.service",
+        "systemctl --user daemon-reload"
+      ]
+    )
   } catch (err) {
     console.error(err);
   }
@@ -168,19 +57,10 @@ async function uninstallService() {
 
 async function startService() {
   try {
-    let { systemPath } = dataPath();
-    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
-
-    if (mode === "system") {
-      // Make sure we're running as root
-      if (os.userInfo().uid !== 0) {
-        console.error("Please run this command as root to start a system service");
-        return;
-      }
-      await execPromise(`sudo systemctl start rmagent.service`);
-    } else {
-      await execPromise(`systemctl --user start rmagent.service`);
-    }
+    await runCommands(
+      ["systemctl --user start rmagent.service"],
+      ["sudo systemctl start rmagent.service"]
+    )
     
     console.log("Service started successfully");
   } catch (err) {
@@ -190,19 +70,10 @@ async function startService() {
 
 async function stopService() {
   try {
-    let { systemPath } = dataPath();
-    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
-
-    if (mode === "system") {
-      // Make sure we're running as root
-      if (os.userInfo().uid !== 0) {
-        console.error("Please run this command as root to stop a system service");
-        return;
-      }
-      await execPromise(`sudo systemctl stop rmagent.service`);
-    } else {
-      await execPromise(`systemctl --user stop rmagent.service`);
-    }
+    await runCommands(
+      ["systemctl --user stop rmagent.service"],
+      ["sudo systemctl stop rmagent.service"]
+    )
 
     console.log("Service stopped successfully");
   } catch (err) {

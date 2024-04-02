@@ -1,4 +1,3 @@
-const os = require("os");
 const path = require("path");
 const { dataPath, findDatabasePath, dbName } = require("../../db/paths");
 const util = require('util');
@@ -11,19 +10,10 @@ const {
   migrateDatabaseToSystemLocation,
 } = require("../../db");
 
-async function isAdmin() {
-  return new Promise((resolve, reject) => {
-    execPromise('net session', (error, stdout, stderr) => {
-      if (error) {
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    }).catch(() => {
-      resolve(false);
-    });
-  });
-}
+const {
+  isAdmin,
+  serviceInstalled,
+} = require("./index");
 
 async function installService(mode) {
   let { userPath, systemPath } = dataPath();
@@ -112,32 +102,22 @@ async function installService(mode) {
   }
 }
 
-async function uninstallService(mode) {
+async function uninstallService() {
+  if (!(await serviceInstalled())) {
+    console.error("Service not installed");
+    return;
+  }
+
   let { userPath, systemPath } = dataPath();
+  let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
+
+  if (!(await isAdmin()) && mode !== "login") {
+    console.error("Please run this command as root");
+    return;
+  }
 
   try {
-    if (findDatabasePath() === path.join(userPath, dbName)) {
-      // Check if service is already installed
-      let regKey = new Registry({
-        hive: Registry.HKCU,
-        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      });
-
-      let regCheck = await new Promise((resolve, reject) => {
-        regKey.get("RackManage", (err, item) => {
-          if (err) {
-            resolve(null);
-          } else {
-            resolve(item.value);
-          }
-        });
-      });
-
-      if (!regCheck) {
-        console.log("Service not installed");
-        return;
-      }
-
+    if (mode === "login") {
       // Remove the service from the registry
       regKey.remove("RackManage", (err) => {
         if (err) {
@@ -153,11 +133,6 @@ async function uninstallService(mode) {
 
       console.log("Service uninstalled");
     } else {
-      if (!await isAdmin()) {
-        console.error("Please run this command as admin");
-        return;
-      }
-
       if (!fs.existsSync(path.join(systemPath, "rmservice.exe"))) {
         console.log("Service not installed");
         return;
@@ -209,22 +184,16 @@ async function uninstallService(mode) {
 }
 
 async function startService() {
-  let { userPath, systemPath } = dataPath();
+  if (!(await serviceInstalled())) {
+    console.error("Service not installed");
+    return;
+  }
 
   try {
-    if (findDatabasePath() === path.join(userPath, dbName)) {
-      console.log("Starting user services on Windows is not supported. Please manually start the service using the \"start-monitoring\" command.");
-    } else {
-      if (!await isAdmin()) {
-        console.error("Please run this command as admin");
-        return;
-      }
+    let { systemPath } = dataPath();
+    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
 
-      if (!fs.existsSync(path.join(systemPath, "rmservice.exe"))) {
-        console.log("Service not installed");
-        return;
-      }
-
+    if (mode === "system") {
       // Check if service is already installed
       let { stdout, stderr } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" status`);
 
@@ -250,6 +219,8 @@ async function startService() {
       }
 
       console.log("Service started");
+    } else {
+      console.log("Starting user services on Windows is not supported. Please manually start the service using the \"start-monitoring\" command.");
     }
   } catch (err) {
     console.error(err);
@@ -257,25 +228,19 @@ async function startService() {
 }
 
 async function stopService() {
-  let { userPath, systemPath } = dataPath();
+  if (!(await serviceInstalled())) {
+    console.error("Service not installed");
+    return;
+  }
 
   try {
-    if (findDatabasePath() === path.join(userPath, dbName)) {
-      console.log("Stopping user services on Windows is not supported. Please use Task Manager to kill the process.");
-    } else {
-      if (!await isAdmin()) {
-        console.error("Please run this command as admin");
-        return;
-      }
+    let { systemPath } = dataPath();
+    let mode = findDatabasePath() === path.join(systemPath, dbName) ? "system" : "user";
 
-      if (!fs.existsSync(path.join(systemPath, "rmservice.exe"))) {
-        console.log("Service not installed");
-        return;
-      }
-
+    if (mode === "system") {
       // Check if service is already installed
       let { stdout, stderr } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" status`);
-      
+        
       if (stderr) {
         console.error(stderr);
         return;
@@ -298,6 +263,8 @@ async function stopService() {
       }
 
       console.log("Service stopped");
+    } else {
+      console.log("Stopping user services on Windows is not supported. Please use Task Manager to kill the process.");
     }
   } catch (err) {
     console.error(err);
