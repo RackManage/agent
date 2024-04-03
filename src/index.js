@@ -8,6 +8,7 @@ const {
   getServers,
   getServer,
   addCredentials,
+  getCredential,
 } = require("./db");
 
 const {
@@ -42,16 +43,35 @@ program
     let servers = await getServers(db);
 
     let table = new Table({
-      head: ["Server", "Name", "Interval", "Port", "Mode"],
+      head: ["Server", "Name", "Interval", "Port", "Mode", "IPMI"],
     });
 
-    servers.forEach((server) => {
+    let ipmi = await Promise.all(servers.map(async (server) => {
+      let credential = await getCredential(db, server.id);
+
+      if (credential) {
+        return {
+          server: server.id,
+          enabled: true,
+        }
+      } else {
+        return {
+          server: server.id,
+          enabled: false,
+        }
+      }
+    }));
+
+    servers.forEach(async (server) => {
+      let serverIpmi = ipmi.find((i) => i.server === server.id);
+
       table.push([
         server.server,
         server.name,
         server.interval,
         server.port,
         server.mode,
+        serverIpmi.enabled ? "Enabled" : "Disabled",
       ]);
     });
 
@@ -164,14 +184,12 @@ program
 
   const keytar = require("keytar");
 
-  let serverId = crypto.randomUUID();
   let accountId = "rackmanage_" + crypto.randomUUID();
 
   await keytar.setPassword("rackmanage", accountId, ipmiPassword);
 
   let ipmiData = {
-    id: serverId,
-    server: server,
+    server: serverData.id,
     address: ipmiAddress,
     username: ipmiUsername,
     credential: accountId,
@@ -241,8 +259,21 @@ program
   let db = await openOrCreateDatabase((options && options.path) || undefined);
   if (!(await checkAndRefreshToken(db))) return;
 
-  const { startMonitoring } = require("./service/ping");
+  const { startMonitoring } = require("./monitor");
   startMonitoring();
+
+  await closeDb(db, (options && options.path) || undefined);
+});
+
+program
+.command("start-agent", { hidden: true })
+.option("-p, --path <path>", "Path to the database")
+.action(async (options) => {
+  let db = await openOrCreateDatabase((options && options.path) || undefined);
+  if (!(await checkAndRefreshToken(db))) return;
+
+  const { startAgent } = require("./background");
+  startAgent();
 
   await closeDb(db, (options && options.path) || undefined);
 });

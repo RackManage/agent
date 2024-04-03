@@ -139,8 +139,7 @@ function initializeDatabase(db) {
       });
 
       db.run(`CREATE TABLE IF NOT EXISTS ipmi (
-        id TEXT PRIMARY KEY NOT NULL,
-        server TEXT KEY NOT NULL,
+        server TEXT PRIMARY KEY NOT NULL,
         address TEXT NOT NULL,
         username TEXT,
         credential TEXT
@@ -196,12 +195,24 @@ function getServer(db, server) {
 
 function addCredentials(db, ipmi) {
   return new Promise((resolve, reject) => {
-    db.run(`REPLACE INTO ipmi (id, server, address, username, credential) VALUES (?, ?, ?, ?, ?)`, [ipmi.id, ipmi.server, ipmi.address, ipmi.username, ipmi.credential], (err) => {
+    db.run(`REPLACE INTO ipmi (server, address, username, credential) VALUES (?, ?, ?, ?)`, [ipmi.server, ipmi.address, ipmi.username, ipmi.credential], (err) => {
       if (err) {
         console.error("Error adding IPMI credentials", err);
         reject(err);
       } else {
         resolve();
+      }
+    });
+  });
+}
+
+function getCredential(db, server) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT server, address, username, credential FROM ipmi WHERE server = ?`, [server], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row ? row : null);
       }
     });
   });
@@ -243,4 +254,5 @@ module.exports = {
   migrateDatabaseToUserLocation,
   getServer,
   addCredentials,
+  getCredential,
 };

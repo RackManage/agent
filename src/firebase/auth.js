@@ -126,6 +126,8 @@ async function checkAndRefreshToken(db, printWarning = true) {
     JSON.stringify(auth.persistenceManager.persistence.storage)
   );
 
+  await initAgent();
+
   return true;
 }
 

@@ -1,6 +1,8 @@
 const { getConfigData, openOrCreateDatabase, closeDb } = require("../db");
-const { auth } = require("./firebaseConfig");
+const { auth, db } = require("./firebaseConfig");
 const needle = require('needle');
+const { onValue, ref } = require("firebase/database");
+const { processIpmiCommands } = require("../ipmi");
 
 async function initAgent() {
   if (!auth.currentUser) {
@@ -63,8 +65,43 @@ async function updateStatus(status) {
   await closeDb(sqliteDB);
 }
 
+async function subscribeToCommands() {
+  if (!auth.currentUser) {
+    return;
+  }
+
+  const sqliteDB = await openOrCreateDatabase();
+  const clientId = await getConfigData(sqliteDB, "clientId");
+  const commandRef = ref(db, `users/${auth.currentUser.uid}/commands`);
+
+  console.log("Subscribed to commands");
+
+  let ipmiCommands = [];
+
+  onValue(commandRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data && Array.isArray(data) && data.length > 0) {
+      data.forEach((command) => {
+        if (command && command.status === "new" && command.type == "ipmi" && command.clientId === clientId) {
+          ipmiCommands.push({
+            id: data.indexOf(command),
+            ...command,
+          })
+        }
+      });
+
+      if (ipmiCommands.length > 0) {
+        processIpmiCommands(ipmiCommands);
+      }
+    }
+  });
+
+  await closeDb(sqliteDB);
+}
+
 module.exports = {
   initAgent,
   deleteAgent,
   updateStatus,
+  subscribeToCommands,
 };
