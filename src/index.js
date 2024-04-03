@@ -25,6 +25,7 @@ const {
 var Table = require("cli-table3");
 const crypto = require("crypto");
 const os = require("os");
+const { ipmiAvailable } = require("./ipmi");
 
 program
   .name(packageName)
@@ -132,7 +133,13 @@ program
 .option("-s, --server <server>", "The server to set the IPMI credentials for")
 .option("-a, --address <address>", "The IPMI address")
 .option("-u, --username <username>", "The IPMI username")
+.option("-p, --password <password>", "The IPMI password")
 .action(async (options) => {
+  if (! await ipmiAvailable()) {
+    console.error("IPMI tools are not available on this system. Please ensure `ipmitool` is installed and available in the current directory or PATH.");
+    return;
+  }
+
   let db = await openOrCreateDatabase();
   if (!(await checkAndRefreshToken(db))) return;
 
@@ -151,7 +158,7 @@ program
 
   let ipmiAddress = options.address || (await promptly.prompt("Enter the IPMI address: "));
   let ipmiUsername = options.username || (await promptly.prompt("Enter the IPMI username: "));
-  let ipmiPassword = await promptly.password("Enter the IPMI password: ");
+  let ipmiPassword = options.password || (await promptly.password("Enter the IPMI password: "));
 
   console.log("\n");
 
