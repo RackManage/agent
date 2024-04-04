@@ -2,52 +2,83 @@
   "name": "rmagent",
   "version": "0.0.1",
   "description": "Rack Manage CLI agent for monitoring and interacting with on-premises equipment",
-  "main": "./build/index.js",
-  "bin": "./build/index.js",
+  "homepage": "https://github.com/cdgco/RackManage-Agent",
+  "bugs": "https://github.com/cdgco/RackManage-Agent/issues",
+  "repository": "cdgco/RackManage-Agent",
+  "license": "MIT",
   "author": "Rack Manage",
-  "engines": {
-    "node": ">=18 <19"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "rmagent": "./bin/run.js"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts",
+    "prepack": "npm run build && oclif manifest && oclif readme",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "prepare": "npm run build",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "posttest": "npm run lint",
+    "version": "oclif readme && git add README.md"
+  },
+  "oclif": {
+    "bin": "rmagent",
+    "commands": "./dist/commands",
+    "dirname": "rmagent",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " ",
+    "topics": {
+      "server": {
+        "description": "Manage servers monitored by the agent"
+      },
+      "service": {
+        "description": "Manage the agent background service"
+      }
+    }
   },
   "dependencies": {
-    "sqlite3": "^5.1.7",
-    "keytar": "^7.9.0"
-  },
-  "devDependencies": {
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-plugins": "^5",
+    "cli-table": "^0.3.11",
     "cli-table3": "^0.6.4",
-    "commander": "^12.0.0",
-    "esbuild": "^0.20.2",
-    "esbuild-plugin-copy": "^2.1.1",
     "firebase": "^10.10.0",
     "jsonwebtoken": "^9.0.2",
+    "keytar": "^7.9.0",
     "needle": "^3.3.1",
     "ping-monitor": "^0.8.2",
-    "pkg": "^5.8.1",
     "promptly": "^3.2.0",
-    "winreg": "^1.2.4"
+    "sqlite3": "^5.1.7",
+    "winreg": "^1.2.5"
   },
-  "scripts": {
-    "prebuild": "node esbuild.config.js",
-    "build:all": "npm run prebuild && pkg package.json --compress Gzip",
-    "build": "pkg package.json --targets host  --compress Gzip"
+  "devDependencies": {
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^3",
+    "@types/chai": "^4",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18",
+    "@types/promptly": "^3.0.5",
+    "chai": "^4",
+    "eslint": "^8.57.0",
+    "eslint-config-oclif": "^5",
+    "eslint-config-oclif-typescript": "^3",
+    "eslint-config-prettier": "^9.1.0",
+    "mocha": "^10",
+    "oclif": "^4",
+    "shx": "^0.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
   },
-  "pkg": {
-    "targets": [
-      "node18-macos-x64",
-      "node18-macos-arm64",
-      "node18-linux-x64",
-      "node18-linux-arm64",
-      "node18-win-x64",
-      "node18-win-arm64"
-    ],
-    "assets": [
-      "io.rackmanage.rmagent.plist.tpl",
-      "rmagent-system.service.tpl",
-      "rmagent-user.service.tpl",
-      "rmservice.exe",
-      "rmservice.xml",
-      "node_modules/sqlite3/build/Release/node_sqlite3.node",
-      "node_modules/keytar/build/Release/keytar.node"
-    ],
-    "outputPath": "dist"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
