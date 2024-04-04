@@ -6,6 +6,8 @@ const path = require("node:path");
 const { dataPath, dbName, findDatabasePath } = require("./paths.ts");
 const { getEffectiveUidGid, isAdmin } = require("../service/helpers/index.ts");
 const { exit } = require("node:process");
+const crypto = require("node:crypto");
+const keytar = require("keytar");
 
 function deleteWithRetry(filePath: string , maxRetries = 5, interval = 100, attempt = 0) {
   try {
@@ -135,16 +137,27 @@ function initializeDatabase(db: any) {
       });
 
       db.run(`CREATE TABLE IF NOT EXISTS ipmi (
-        server TEXT PRIMARY KEY NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        server_id TEXT NOT NULL,
         address TEXT NOT NULL,
         username TEXT,
-        credential TEXT
+        credential TEXT,
+        port INTEGER DEFAULT 623,
+        flags TEXT DEFAULT '',
+        FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
       )`, [], (err: Error) => {
         if (err) {
           console.error("Error creating ipmi table", err);
           reject(err);
         } else {
           resolve(null);
+        }
+      });
+
+      db.run("PRAGMA foreign_keys = ON", (err: Error) => {
+        if (err) {
+          console.error("Error enabling foreign key support", err);
+          reject(err);
         }
       });
     });
@@ -189,22 +202,28 @@ function getServer(db: any, server: string) {
 
 }
 
-function addCredentials(db: any, ipmi: { address: string, credential: string, server: string,  username: string }) {
+function addCredentials(db: any, ipmi: { address: string, flags: string, password: string, port: string, serverId: string,  username: string }) {
   return new Promise((resolve, reject) => {
-    db.run(`REPLACE INTO ipmi (server, address, username, credential) VALUES (?, ?, ?, ?)`, [ipmi.server, ipmi.address, ipmi.username, ipmi.credential], (err: Error) => {
-      if (err) {
-        console.error("Error adding IPMI credentials", err);
-        reject(err);
-      } else {
-        resolve(null);
-      }
+    const accountId = "rackmanage_" + crypto.randomUUID();
+    keytar.setPassword("rackmanage", accountId, ipmi.password).then(() => {
+      db.run(`REPLACE INTO ipmi (server_id, address, username, credential, port, flags) VALUES (?, ?, ?, ?, ?, ?)`, [ipmi.serverId, ipmi.address, ipmi.username, accountId, ipmi.port, ipmi.flags], (err: Error) => {
+        if (err) {
+          console.error("Error adding IPMI credentials", err);
+          reject(err);
+        } else {
+          resolve(null);
+        }
+      }).catch((error: Error) => {
+        console.error("Error adding IPMI credentials", error);
+        reject(error);
+      });
     });
   });
 }
 
-function getCredential(db: any, server: string) {
+function getCredential(db: any, serverId: string) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT server, address, username, credential FROM ipmi WHERE server = ?`, [server], (err: Error, row: any) => {
+    db.get(`SELECT server_id, address, username, credential, port, flags FROM ipmi WHERE server_id = ?`, [serverId], (err: Error, row: any) => {
       if (err) {
         reject(err);
       } else if (row) {
