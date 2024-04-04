@@ -137,11 +137,10 @@ function initializeDatabase(db: any) {
       });
 
       db.run(`CREATE TABLE IF NOT EXISTS ipmi (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        server_id TEXT NOT NULL,
+        server_id TEXT PRIMARY KEY NOT NULL,
         address TEXT NOT NULL,
-        username TEXT,
-        credential TEXT,
+        username TEXT NOT NULL,
+        credential TEXT NOT NULL,
         port INTEGER DEFAULT 623,
         flags TEXT DEFAULT '',
         FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
@@ -237,6 +236,18 @@ function getCredential(db: any, serverId: string) {
   });
 }
 
+function getCredentials(db: any) {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT server_id, address, username, credential, port, flags FROM ipmi`, [], (err: Error, rows: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
 function setConfigData(db: any, key: string, value: string) {
   return new Promise((resolve, reject) => {
     db.run(`REPLACE INTO config (key, value) VALUES (?, ?)`, [key, value], (err: Error) => {
@@ -268,6 +279,7 @@ export {
   closeDb,
   getConfigData,
   getCredential,
+  getCredentials,
   getServer,
   getServers,
   migrateDatabaseToSystemLocation,

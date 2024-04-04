@@ -88,10 +88,7 @@ export default class Set extends Command {
     const credential = await setIpmi(flags);
     credential.serverId = serverData.id;
 
-    console.log(credential);
-
     await addCredentials(db, credential);
-
     await closeDb(db);
 
     console.log(`IPMI credentials added / updated for server ${server}`);
