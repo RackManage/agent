@@ -62,7 +62,7 @@ async function openOrCreateDatabase(dbPath = findDatabasePath()) {
       console.error("Please run this command as root");
       exit(1);
     }
-  } else {
+  } else if (await isAdmin()) {
     await chownDb(dbPath);
   }
 
@@ -206,17 +206,19 @@ function addCredentials(db: any, ipmi: { address: string, flags: string, passwor
   return new Promise((resolve, reject) => {
     const accountId = "rackmanage_" + crypto.randomUUID();
     keytar.setPassword("rackmanage", accountId, ipmi.password).then(() => {
-      db.run(`REPLACE INTO ipmi (server_id, address, username, credential, port, flags) VALUES (?, ?, ?, ?, ?, ?)`, [ipmi.serverId, ipmi.address, ipmi.username, accountId, ipmi.port, ipmi.flags], (err: Error) => {
-        if (err) {
-          console.error("Error adding IPMI credentials", err);
-          reject(err);
-        } else {
-          resolve(null);
-        }
-      }).catch((error: Error) => {
-        console.error("Error adding IPMI credentials", error);
+      try {
+        db.run(`REPLACE INTO ipmi (server_id, address, username, credential, port, flags) VALUES (?, ?, ?, ?, ?, ?)`, [ipmi.serverId, ipmi.address, ipmi.username, accountId, ipmi.port, ipmi.flags], (err: Error) => {
+          if (err) {
+            console.error("Error adding IPMI credentials", err);
+            reject(err);
+          } else {
+            resolve(null);
+          }
+        })
+      } catch (error) {
+        console.error("Error adding IPMI credentials");
         reject(error);
-      });
+      }
     });
   });
 }

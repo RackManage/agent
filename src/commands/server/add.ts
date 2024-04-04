@@ -3,6 +3,7 @@ const { addCredentials, addServer, closeDb, openOrCreateDatabase } = require('..
 const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const crypto = require("node:crypto");
 const promptly = require("promptly");
+const { ipmiAvailable } = require("../../ipmi/index.ts");
 
 // Validates if a value is a number within a specified range
 function numberValidator(value: any, min: number, max: number) {
@@ -22,6 +23,41 @@ function isValidNumber(value: number) {
   } catch {
     return false;
   }
+}
+
+async function setIpmi(flags: any) {
+  let setIpmi = await promptly.confirm("Do you want to configure IPMI credentials for this server? [y/N]: ", { default: "n" });
+
+  if (!await ipmiAvailable()) {
+    console.error("IPMI tools are not available on this system. Please ensure `ipmitool` is installed and available in the current directory or PATH.");
+    setIpmi = false;
+  }
+
+  let credential : any = {};
+  
+  if (setIpmi) {
+    if (flags.ipmiPort && !isValidNumber(flags.ipmiPort)) {
+      flags.ipmiPort = undefined;
+    }
+
+    const ipmiAddress = flags.ipmiAddress || await promptly.prompt("IPMI address: ");
+    const ipmiUsername = flags.ipmiUsername || await promptly.prompt("IPMI username: ");
+    const ipmiPassword = flags.ipmiPassword || await promptly.password("IPMI password: ");
+    const ipmiPort = flags.ipmiPort || await promptly.prompt("IPMI port [623]: ", { default: "623", validator: (value: any) => numberValidator(value, 1, 65_535) });
+    const ipmiFlags = flags.ipmiFlags || await promptly.prompt("Extra ipmitool flags (optional): ", { default: "", retry: false });
+
+    credential = {
+      address: ipmiAddress,
+      flags: ipmiFlags,
+      password: ipmiPassword,
+      port: ipmiPort,
+      username: ipmiUsername,
+    };
+
+    return credential;
+  }
+  
+  return false;
 }
 
 export default class Add extends Command {
@@ -71,43 +107,23 @@ export default class Add extends Command {
       server,
     };
 
-    const setIpmi = await promptly.confirm("Do you want to configure IPMI credentials for this server? [y/N]: ", { default: "n" });
-
-    let credential : any = {};
-
-    if (flags.ipmiPort && !isValidNumber(flags.ipmiPort)) {
-      flags.ipmiPort = undefined;
-    }
-
-    const ipmiAddress = flags.ipmiAddress || await promptly.prompt("IPMI address: ");
-    const ipmiUsername = flags.ipmiUsername || await promptly.prompt("IPMI username: ");
-    const ipmiPassword = flags.ipmiPassword || await promptly.password("IPMI password: ");
-    const ipmiPort = flags.ipmiPort || await promptly.prompt("IPMI port [623]: ", { default: "623", validator: (value: any) => numberValidator(value, 1, 65_535) });
-    const ipmiFlags = flags.ipmiFlags || await promptly.prompt("Extra ipmitool flags (optional): ", { default: "", retry: false });
-
-    if (setIpmi) {
-      credential = {
-        address: ipmiAddress,
-        flags: ipmiFlags,
-        password: ipmiPassword,
-        port: ipmiPort,
-        username: ipmiUsername,
-      };
-    }
+    const credential = await setIpmi(flags);
 
     await addServer(db, data);
 
-    await addCredentials(db, {
-      address: credential.address,
-      flags: credential.flags,
-      password: credential.password,
-      port: credential.port,
-      serverId,
-      username: credential.username,
-    });
+    if (credential) {
+      await addCredentials(db, {
+        address: credential.address,
+        flags: credential.flags,
+        password: credential.password,
+        port: credential.port,
+        serverId,
+        username: credential.username,
+      });
+    }
 
     await closeDb(db);
 
-    console.log(`Server ${data.name} added with id ${serverId}`);
+    console.log(`Server ${data.server} added with id ${serverId}`);
   }
 }

@@ -15,6 +15,12 @@ export default class List extends Command {
     if (!(await checkAndRefreshToken(db))) return;
 
     const servers = await getServers(db);
+    
+    if (servers.length === 0) {
+      console.log("No servers found. Use `rmagent server add` to add a server.");
+      await closeDb(db);
+      return;
+    }
 
     const table = new Table({
       head: ["Server", "Name", "Interval", "Port", "Mode", "IPMI"],
@@ -33,7 +39,7 @@ export default class List extends Command {
 
       table.push([
         server.server,
-        server.name,
+        server.name || "N/A",
         server.interval,
         server.port,
         server.mode,

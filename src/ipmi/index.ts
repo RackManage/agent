@@ -41,50 +41,59 @@ async function updateCommandStatus(command: any, status: string) {
   await closeDb(sqliteDB);
 }
 
-async function processIpmiCommands(commands: any) {
-  console.log("Processing commands...");
+async function runIpmiCommand(server: string, command: string) {
   const sqliteDB = await openOrCreateDatabase();
 
+  // Get server details from database
+  const serverObject = await getServer(sqliteDB, server);
+
+  if (!serverObject) {
+    console.error("Server not found.");
+    return;
+  }
+
+  // Get IPMI credentials from database
+  const credential = await getCredential(sqliteDB, serverObject.id);
+
+  if (!credential) {
+    console.error("IPMI credentials not found for server", serverObject.server);
+    return;
+  }
+
+  // Get IPMI password from keychain
+  const password = await keytar.getPassword("rackmanage", credential.credential);
+
+  // Execute IPMI command
+  try {
+    const { stderr, stdout } = await execPromise(`ipmitool -H ${credential.address} -U ${credential.username} -P ${password} -p ${credential.port} ${credential.flags} ${command}`);
+    console.error(stderr);
+    console.log(`${command} command sent to`, serverObject.server);
+
+    return stdout;
+  } catch (error) {
+    throw new Error(`Error sending ${command} command to ${serverObject.server}: ${error}`);
+  }
+}
+
+async function processIpmiCommands(commands: any) {
+  console.log("Processing commands...");
   await Promise.all(commands.map(async (command: any) => {
     if (command.action === "chassis identify" && command.server) {
-      // Get server details from database
-      const  server = await getServer(sqliteDB, command.server);
-
-      if (!server) {
-        console.error("Server not found.");
-        return;
-      }
-
-      // Get IPMI credentials from database
-      const credential = await getCredential(sqliteDB, server.id);
-
-      if (!credential) {
-        console.error("IPMI credentials not found for server", server.server);
-        return;
-      }
-
-      // Get IPMI password from keychain
-      const password = await keytar.getPassword("rackmanage", credential.credential);
-
       // Execute IPMI command
       try {
-        const { stderr, stdout } = await execPromise(`ipmitool -H ${credential.address} -U ${credential.username} -P ${password} chassis identify`);
-        console.error(stderr);
-        console.log(stdout);
-        console.log("Chassis identify command sent to", server.server);
+        console.log(await runIpmiCommand(command.server, command.action));
 
         // Update command status
         await updateCommandStatus(command, "complete");
       } catch (error) {
-        console.error("Error sending chassis identify command to", server.server, error);
+        console.error("Error sending chassis identify command to", command.server, error);
       }
     }
   }));
-
-  await closeDb(sqliteDB);
 }
 
 export {
   ipmiAvailable,
   processIpmiCommands,
+  runIpmiCommand,
 };
