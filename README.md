@@ -11,11 +11,7 @@
 * [Development](#development)
 <!-- tocstop -->
  
-The Rack Manage Agent (`rmagent`) is a lightweight agent that runs on an on-premises server and communicates with the Rack Manage Cloud Service. The agent is responsible for monitoring server uptime by pinging other devices on the network and sending the results to the cloud service.
-
-The agent is written in Node.js and is compiled to a binary using [esbuild](https://esbuild.github.io/) and [pkg](https://www.npmjs.com/package/pkg). The agent is designed to be lightweight and run on a variety of operating systems.
-
-Currently, the build system is configured to use Node.js 18.5.0 and produces binaries for Linux, MacOS, and Windows in both the x64 and ARM64 architectures.
+The Rack Manage Agent (`rmagent`) is a service that runs on an on-premises server and communicates with the Rack Manage cloud application. The agent is responsible for monitoring server uptime by pinging other devices on the network and sending the results to the cloud service. Additionally, the agent can connect to hardware via IPMI to send commands to the server, such as chassis identification.
 
 # Requirements
 
