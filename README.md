@@ -5,6 +5,7 @@
 * [Requirements](#requirements)
 * [Installation](#installation)
 * [Usage](#usage)
+* [Uninstallation](#uninstallation)
 * [Commands](#commands)
 * [Security](#security)
 * [Development](#development)
@@ -135,29 +136,18 @@ $ rmagent update beta
 # Uninstallation
 
 ## Linux
-### Standalone Install
 
 For standalone installs, you can uninstall the agent by typing:
 
 ```bash
-rm -rf /usr/local/lib/rmagent /usr/local/bin/rmagent /usr/local/rmagent 
-rm -rf ~/.local/share/rmagent ~/.cache/rmagent
-```
-
-### Debian and Ubuntu Installs
-For Debian/Ubuntu, you can uninstall the agent by typing:
-
-```bash
-sudo apt-get remove heroku heroku-toolbelt
-sudo rm /etc/apt/sources.list.d/heroku.list
+rm -rf /usr/local/lib/rmagent /usr/local/bin/rmagent /usr/local/rmagent ~/.local/share/rmagent ~/.cache/rmagent
 ```
 
 ## MacOS
 To uninstall the Rack Manage Agent on MacOS, run the following command:
 
 ```bash
-rm -rf /usr/local/lib/rmagent /usr/local/bin/rmagent /usr/local/rmagent
-rm -rf ~/.local/share/rmagent ~/Library/Caches/rmagent
+rm -rf /usr/local/lib/rmagent /usr/local/bin/rmagent /usr/local/rmagent ~/.local/share/rmagent ~/Library/Caches/rmagent
 ```
 
 ## Windows
