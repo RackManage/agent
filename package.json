@@ -25,7 +25,7 @@
     "prepare": "yarn run build",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "posttest": "yarn run lint",
-    "version": "oclif readme && git add README.md"
+    "version": "oclif readme --multi && git add README.md"
   },
   "oclif": {
     "bin": "rmagent",
