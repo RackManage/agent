@@ -810,33 +810,121 @@ Agents can be disabled or completely removed from the Rack Manage Cloud Service 
 The Rack Manage Agent is open source, allowing you to inspect, review, and understand exactly what you're installing.
 
 # Development
+Rack Manage Agent is built in Node.js using the [Open CLI Framework](https://oclif.io/) (`oclif`) and is written in TypeScript. Rack Manage Agent does not require Node.js to be installed on the target system as it is bundled with a portable version of Node.js when compiled.
+
+`oclif` may not compile correctly when using `npm`, so it is recommended to use `yarn` for development.
 
 ## Development Requirements
 - Node.js 18
+- oclif
+- Yarn
+
+## Getting Started
 
 To get started with development, clone the repository and run the following commands:
 
 ```bash
-npm install
+yarn global add oclif
+yarn install
 ```
 
-To build the agent for your current platform, first ensure that you have the correct version of Node.js installed. Then run the following command:
+To test the agent locally, you can run the following command:
 
 ```bash
-npm run build
+node bin/dev
 ```
 
-This will create a binary in the `build` directory that you can run on your local machine.
+This will run the agent in development mode, which prints debug information to the console.
 
-To build for all platforms, run the following command:
+To preview the agent as it would appear in production, you can run the following command:
 
 ```bash
-npm run build:all
+node bin/run
 ```
 
-This will create binaries for Linux, MacOS, and Windows in both the x64 and ARM64 architectures.
+## Building the Agent
 
-Note that all dependencies should be marked as `devDependencies` in the `package.json` file unless they include native modules or are required at runtime, such as `sqlite3` and `keytar`. Any dependencies not marked for dev will be bundled by `pkg` which does not support ES6 modules. By marking dependencies as `devDependencies`, `esbuild` will bundle them into a single file which can then be packaged by `pkg`.
+To build the agent, you must specify the platform to build for, and must build tarballs / installers in separate steps.
+
+### Building for a Specific Platform
+
+To build the agent for a specific platform, run the following command:
+
+```bash
+oclif pack tarballs --targets=<platform>-<arch>
+```
+
+For example, to build the agent for Linux x64, run the following command:
+
+```bash
+oclif pack tarballs --targets=linux-x64
+```
+
+### Building Tarballs
+
+To build tarballs for all platforms, run the following command:
+
+```bash
+oclif pack tarballs
+```
+
+### Building MacOS Installers
+
+To build installers for MacOS, run the following command:
+
+```bash
+oclif pack macos
+```
+
+### Building Windows Installers
+
+To build installers for Windows, run the following command:
+
+```bash
+oclif pack windows
+```
+
+## Building Debian Packages
+
+To build Debian packages, run the following command:
+
+```bash
+oclif pack deb
+```
+
+Debian packages must be built on a Debian-based system, such as Ubuntu.
+
+## Distributing the Agent
+
+To enable automatic updates, the agent must be distributed through an S3 storage service. This is handled automatically through `oclif` and is configured in the `package.json` file under the `oclif.s3` key.
+
+Rack Manage uses Cloudflare R2 rather than AWS S3 for distribution. While `oclif` supports non-AWS S3 storage, there is some additional configuration required to use it.
+
+First, you must set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables to the Cloudflare R2 credentials. You must also set the `AWS_S3_ENDPOINT` environment variable to the Cloudflare R2 endpoint.
+
+```bash
+export AWS_ACCESS_KEY_ID=<READ_WRITE_ACCESS_KEY>
+export AWS_SECRET_ACCESS_KEY=<SECRET_ACCESS_KEY>
+export AWS_S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+```
+
+Once these environment variables are set, you can upload the agent to Cloudflare R2 by running the following command:
+
+```bash
+oclif upload <type>
+```
+
+Where `<type>` is the type of file to upload, such as `tarballs`, `macos`, `win`, or `deb`.
+
+Finally, you can publish the agent to the Cloudflare R2 distribution by running the following command:
+
+```bash
+oclif promote --channel <channel> --version <version> --sha <sha> --indexes --xz
+```
+
+Where `<channel>` is the release channel to publish to, such as `stable` or `beta`, `<version>` is the version number, and `<sha>` is the 7 character git commit hash.
+
+By default, this command will only publish tarballs. To publish other types of files, you must specify the type with the `-d`, `-m`, or `-w` flags for deb, macos, and win files, respectively.
 
 ## Service Management
 This agent is designed to run as a service in both user and system contexts (on login and on boot) for Linux, Windows, and MacOS, using systemd, launchd, and the Windows Service Manager, respectively. The service is configured to run the agent in the background and restart it if it crashes.
@@ -864,11 +952,3 @@ This will start the simulator on port 623. You can then test the agent's IPMI fu
 ```bash
 rmagent ipmi -s <server-address> -a localhost -u ADMIN -p ADMIN
 ```
-
-## Future Work
-
-The Rack Manage Agent is under active development, and we are continuously working to improve it. Some features we are considering for future releases include:
-* Move from `commander` to `oclif` for a more robust CLI
-  * Add IPMI as an optional plugin
-  * Support automatic updates
-* Sign binaries for Windows and MacOS
