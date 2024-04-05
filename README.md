@@ -118,6 +118,9 @@ The Rack Manage Agent is designed to automatically update itself when new versio
 $ rmagent update
 ```
 
+> **_NOTE:_**
+> `rmagent update` is not supported through the Debian installers. To update the agent, run `sudo apt update && sudo apt install rmagent` instead.
+
 To update to a specific version, you can specify the version number:
 
 ```bash
