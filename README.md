@@ -28,7 +28,6 @@ For other issues, [submit a support ticket](https://support.rackmanage.io/).
 * [`rmagent ipmi`](docs/ipmi.md) - Manage IPMI settings for servers
 * [`rmagent login`](docs/login.md) - Connect agent to Rack Manage account
 * [`rmagent logout`](docs/logout.md) - Disconnect agent from Rack Manage account
-* [`rmagent plugins`](docs/plugins.md) - Manage plugins for the agent
 * [`rmagent server`](docs/server.md) - Manage servers monitored by the agent
 * [`rmagent service`](docs/service.md) - Manage the agent background service
 * [`rmagent status`](docs/status.md) - Check the status of the agent
