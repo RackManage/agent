@@ -1,8 +1,8 @@
 const os = require("node:os");
 
-const macosModule = require("./macos/index.ts");
-const linuxModule = require("./linux/index.ts");
-const windowsModule = require("./windows/index.ts");
+import * as linuxModule from "./linux";
+import * as macosModule from "./macos";
+import * as windowsModule from "./windows";
 
 const platformModules:  Record<string, any> = {
   darwin: macosModule,
@@ -10,7 +10,7 @@ const platformModules:  Record<string, any> = {
   win32: windowsModule,
 };
 
-async function manageService(command: string, option = null) {
+async function manageService(command: string, option: any = null) {
   const modulePath = platformModules[os.platform()]
 
   if (!modulePath) {
@@ -46,4 +46,4 @@ async function manageService(command: string, option = null) {
   return serviceCommand(option);
 }
 
-module.exports = { manageService };
+export { manageService };

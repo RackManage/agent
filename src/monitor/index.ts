@@ -1,6 +1,7 @@
 const Monitor = require('ping-monitor');
-const { getServers, openOrCreateDatabase } = require("../db/index.ts");
-const { updateStatus } = require("../firebase/realtime.ts");
+
+import { getServers, openOrCreateDatabase } from "../db"
+import { updateStatus } from "../firebase/realtime"
 
 async function pingServer(server: any) {
   const config = {
@@ -81,13 +82,13 @@ async function pingServer(server: any) {
 
 async function startMonitoring() {
   const db = await openOrCreateDatabase();
-  const servers = await getServers(db);
+  const servers: any = await getServers(db);
 
   for (const server of servers) {
     pingServer(server);
   }
 }
 
-module.exports = {
+export {
   startMonitoring,
 };

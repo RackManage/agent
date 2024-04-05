@@ -2,11 +2,11 @@ const os = require("node:os");
 const util = require("node:util");
 const { exec } = require("node:child_process");
 const execPromise = util.promisify(exec);
-const { dataPath } = require("../../db/paths.ts");
 const fs = require("node:fs");
 const fsPromises = fs.promises;
 const path = require("node:path");
 
+import { dataPath } from "../../db/paths"
 
 async function isAdmin() {
   switch (os.platform()) {
@@ -68,7 +68,7 @@ async function getEffectiveUidGid() {
   }
 }
 
-async function recursiveChown(dirPath: string, uid: string, gid: string) {
+async function recursiveChown(dirPath: string, uid: number, gid: number) {
   try {
     await fsPromises.chown(dirPath, uid, gid);
     const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });

@@ -1,19 +1,19 @@
 const path = require("node:path");
-const { dataPath, dbName, findDatabasePath } = require("../../db/paths.ts");
 const util = require('node:util');
 const { exec } = require("node:child_process");
 const execPromise = util.promisify(exec);
 const fs = require("node:fs");
 const Registry = require("winreg");
-const {
+
+import {
   migrateDatabaseToSystemLocation,
   migrateDatabaseToUserLocation,
-} = require("../../db/index.ts");
-
-const {
+} from "../../db"
+import { dataPath, dbName, findDatabasePath } from "../../db/paths"
+import {
   isAdmin,
   serviceInstalled,
-} = require("../helpers/index.ts");
+} from "../helpers"
 
 async function installService(mode: string) {
   const {  systemPath, userPath } = dataPath();

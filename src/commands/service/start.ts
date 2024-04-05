@@ -1,7 +1,8 @@
 import {Command} from '@oclif/core'
-const { closeDb, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
-const { manageService } = require("../../service/index.ts");
+
+import { closeDb, openOrCreateDatabase } from '../../db'
+import { checkAndRefreshToken } from '../../firebase/auth'
+import { manageService } from '../../service'
 
 export default class Start extends Command {
   static description = 'Start the agent service'

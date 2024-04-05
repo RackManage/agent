@@ -1,7 +1,8 @@
 import {Command} from '@oclif/core'
-const { closeDb, getCredential, getServers, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const Table = require("cli-table3");
+
+import { closeDb, getCredential, getServers, openOrCreateDatabase } from '../../db/index'
+import { checkAndRefreshToken } from '../../firebase/auth'
 
 export default class List extends Command {
   static description = 'List all servers'
@@ -14,7 +15,7 @@ export default class List extends Command {
     const db = await openOrCreateDatabase();
     if (!(await checkAndRefreshToken(db))) return;
 
-    const servers = await getServers(db);
+    const servers: any = await getServers(db);
     
     if (servers.length === 0) {
       console.log("No servers found. Use `rmagent server add` to add a server.");

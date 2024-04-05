@@ -1,7 +1,8 @@
 import {Args, Command} from '@oclif/core'
 import { prompt } from 'promptly'
-const { closeDb, openOrCreateDatabase } = require('../db/index.ts')
-const { loginWithToken } = require('../firebase/auth.ts')
+
+import { closeDb, openOrCreateDatabase } from '../db'
+import { loginWithToken } from '../firebase/auth'
 
 export default class Login extends Command {
   static args = {

@@ -2,9 +2,10 @@ const util = require("node:util");
 const { exec } = require("node:child_process");
 const execPromise = util.promisify(exec);
 const keytar = require('keytar');
-const { auth } = require("../firebase/firebase-config.ts");
-const { closeDb, getCredential, getServer, openOrCreateDatabase } = require("../db/index.ts");
 const needle = require('needle');
+
+import { closeDb, getCredential, getServer, openOrCreateDatabase } from "../db";
+import { auth } from "../firebase/firebase-config";
 
 async function ipmiAvailable() {
   // Check if `ipmitool` is installed in path / current directory
@@ -45,7 +46,7 @@ async function runIpmiCommand(server: string, command: string) {
   const sqliteDB = await openOrCreateDatabase();
 
   // Get server details from database
-  const serverObject = await getServer(sqliteDB, server);
+  const serverObject: any = await getServer(sqliteDB, server);
 
   if (!serverObject) {
     console.error("Server not found.");
@@ -53,7 +54,7 @@ async function runIpmiCommand(server: string, command: string) {
   }
 
   // Get IPMI credentials from database
-  const credential = await getCredential(sqliteDB, serverObject.id);
+  const credential: any = await getCredential(sqliteDB, serverObject.id);
 
   if (!credential) {
     console.error("IPMI credentials not found for server", serverObject.server);
@@ -70,8 +71,10 @@ async function runIpmiCommand(server: string, command: string) {
     console.log(`${command} command sent to`, serverObject.server);
 
     return stdout;
-  } catch (error) {
-    throw new Error(`Error sending ${command} command to ${serverObject.server}: ${error}`);
+  } catch (error: any) {
+    // Hide password in error message
+    error.message = error.message.replace(`-P ${password}`, "-P ********")
+    throw new Error(`Error sending ${command} command to ${serverObject.server}: ${error.message}`);
   }
 }
 
@@ -85,8 +88,8 @@ async function processIpmiCommands(commands: any) {
 
         // Update command status
         await updateCommandStatus(command, "complete");
-      } catch (error) {
-        console.error("Error sending chassis identify command to", command.server, error);
+      } catch {
+        console.error("Error sending chassis identify command to", command.server);
       }
     }
   }));

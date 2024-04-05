@@ -1,21 +1,22 @@
 const fs = require("node:fs");
-const { dataPath, dbName, findDatabasePath } = require("../../db/paths.ts");
 const path = require("node:path");
 const util = require("node:util");
 const { exec } = require("node:child_process");
 const execPromise = util.promisify(exec);
-const {
+
+import {
+  migrateDatabaseToSystemLocation,
+  migrateDatabaseToUserLocation,
+} from "../../db"
+import { dataPath, dbName, findDatabasePath } from "../../db/paths"
+import {
   getEffectiveUidGid,
   isAdmin,
   recursiveChown,
   serviceInstalled,
   systemServicePath,
   userServicePath,
-} = require("./index.ts");
-const {
-  migrateDatabaseToSystemLocation,
-  migrateDatabaseToUserLocation,
-} = require("../../db/index.ts");
+} from "./index"
 
 async function install(serviceTemplate: string, serviceFileName: string, loadCommands: string[], mode: string) {
   if (!(await isAdmin()) && mode !== "login") {
@@ -25,7 +26,7 @@ async function install(serviceTemplate: string, serviceFileName: string, loadCom
 
   const { systemPath, userPath } = dataPath();
 
-  if (await serviceInstalled(serviceFileName)) {
+  if (await serviceInstalled()) {
     console.log(
       "Service already installed. Run `rmagent service uninstall` to remove the service."
     );

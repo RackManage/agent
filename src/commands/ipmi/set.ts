@@ -1,8 +1,9 @@
 import {Command, Flags} from '@oclif/core'
-const { addCredentials, closeDb, getServer, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const promptly = require("promptly");
-const { ipmiAvailable } = require("../../ipmi/index.ts");
+
+import { addCredentials, closeDb, getServer, openOrCreateDatabase } from '../../db/index'
+import { checkAndRefreshToken } from '../../firebase/auth'
+import { ipmiAvailable } from "../../ipmi/index";
 
 // Validates if a value is a number within a specified range
 function numberValidator(value: any, min: number, max: number) {
@@ -50,7 +51,7 @@ async function setIpmi(flags: any) {
 }
 
 export default class Set extends Command {
-  static description = 'Set IPMI credentials for a server'
+  static description = 'Set IPMI account for a server'
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',

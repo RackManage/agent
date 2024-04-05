@@ -1,8 +1,8 @@
-async function startAgent() {
-  const { subscribeToCommands } = require("../firebase/realtime.ts");
-  subscribeToCommands();
+import { subscribeToCommands } from "../firebase/realtime";
+import { startMonitoring } from "../monitor";
 
-  const { startMonitoring } = require("../monitor/index.ts");
+async function startAgent() {
+  subscribeToCommands();
   startMonitoring();  
 }
 

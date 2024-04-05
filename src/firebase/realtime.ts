@@ -1,8 +1,10 @@
-const { closeDb, getConfigData, openOrCreateDatabase } = require("../db/index.ts");
-const { auth, db } = require("./firebase-config.ts");
 const needle = require('needle');
 const { onValue, ref } = require("firebase/database");
-const { processIpmiCommands } = require("../ipmi/index.ts");
+
+import { closeDb, getConfigData, openOrCreateDatabase } from "../db"
+import { processIpmiCommands } from "../ipmi"
+import { auth, db } from "./firebase-config"
+
 
 async function initAgent() {
   if (!auth.currentUser) {

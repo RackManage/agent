@@ -3,11 +3,12 @@ const fs = require("node:fs");
 const fsPromises = fs.promises;
 const os = require("node:os");
 const path = require("node:path");
-const { dataPath, dbName, findDatabasePath } = require("./paths.ts");
-const { getEffectiveUidGid, isAdmin } = require("../service/helpers/index.ts");
 const { exit } = require("node:process");
 const crypto = require("node:crypto");
 const keytar = require("keytar");
+
+import { getEffectiveUidGid, isAdmin } from '../service/helpers'
+import { dataPath, dbName, findDatabasePath } from './paths'
 
 function deleteWithRetry(filePath: string , maxRetries = 5, interval = 100, attempt = 0) {
   try {
@@ -248,7 +249,7 @@ function getCredentials(db: any) {
   });
 }
 
-function setConfigData(db: any, key: string, value: string) {
+function setConfigData(db: any, key: string, value: null|string) {
   return new Promise((resolve, reject) => {
     db.run(`REPLACE INTO config (key, value) VALUES (?, ?)`, [key, value], (err: Error) => {
       if (err) {
@@ -261,7 +262,7 @@ function setConfigData(db: any, key: string, value: string) {
   });
 }
 
-function getConfigData(db: any, key: string) {
+function getConfigData(db: any, key: string): Promise<null|string> {
   return new Promise((resolve, reject) => {
     db.get(`SELECT value FROM config WHERE key = ?`, [key], (err: Error, row: any) => {
       if (err) {

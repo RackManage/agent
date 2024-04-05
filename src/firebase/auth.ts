@@ -9,10 +9,11 @@ const {
   signOut,
   updateCurrentUser,
 } = require("firebase/auth");
-const { auth } = require("./firebase-config.ts");
 const jwt = require("jsonwebtoken");
-const { getConfigData, openOrCreateDatabase, setConfigData } = require("../db/index.ts");
-const { deleteAgent, initAgent } = require("./realtime.ts");
+
+import { getConfigData, openOrCreateDatabase, setConfigData } from "../db"
+import { auth } from "./firebase-config"
+import { deleteAgent, initAgent } from "./realtime"
 
 async function loginWithToken(token: string, db: any) {
   // Decode token to get extra claims

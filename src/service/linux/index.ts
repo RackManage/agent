@@ -1,9 +1,10 @@
-const {
+const path = require("node:path");
+
+import {
   install,
   runCommands,
   uninstall,
-} = require("../helpers/unix.ts");
-const path = require("node:path");
+} from "../helpers/unix"
 
 async function installService(mode: string) {
   try {

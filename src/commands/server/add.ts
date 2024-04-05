@@ -1,9 +1,10 @@
 import {Command, Flags} from '@oclif/core'
-const { addCredentials, addServer, closeDb, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const crypto = require("node:crypto");
 const promptly = require("promptly");
-const { ipmiAvailable } = require("../../ipmi/index.ts");
+
+import { addCredentials, addServer, closeDb, openOrCreateDatabase } from '../../db/index'
+import { checkAndRefreshToken } from '../../firebase/auth'
+import { ipmiAvailable } from '../../ipmi/index'
 
 // Validates if a value is a number within a specified range
 function numberValidator(value: any, min: number, max: number) {

@@ -1,6 +1,7 @@
 import {Command, Flags} from '@oclif/core'
-const { closeDb, openOrCreateDatabase } = require('../db/index.ts')
-const { checkAndRefreshToken } = require('../firebase/auth.ts')
+
+import { closeDb, openOrCreateDatabase } from '../db'
+import { checkAndRefreshToken } from '../firebase/auth'
 
 export default class StartMonitoring extends Command {
   static examples = [

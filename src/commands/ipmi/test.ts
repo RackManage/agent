@@ -1,11 +1,12 @@
 import {Command, Flags} from '@oclif/core'
-const { closeDb, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const promptly = require("promptly");
-const { ipmiAvailable, runIpmiCommand } = require("../../ipmi/index.ts");
+
+import { closeDb, openOrCreateDatabase } from '../../db/index'
+import { checkAndRefreshToken } from '../../firebase/auth'
+import { ipmiAvailable, runIpmiCommand } from '../../ipmi/index'
 
 export default class Test extends Command {
-  static description = 'Test IPMI credentials'
+  static description = 'Test IPMI connection'
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',

@@ -1,6 +1,7 @@
 import {Command} from '@oclif/core'
-const { closeDb, openOrCreateDatabase } = require('../db/index.ts')
-const { checkAndRefreshToken, logout } = require('../firebase/auth.ts')
+
+import { closeDb, openOrCreateDatabase } from '../db'
+import { checkAndRefreshToken, logout } from '../firebase/auth'
 
 export default class Logout extends Command {
   static description = 'Disconnect agent from Rack Manage account'

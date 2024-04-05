@@ -1,14 +1,14 @@
 const path = require("node:path");
-const {
+
+import {
+  systemServicePath,
+  userServicePath,
+} from "../helpers"
+import {
   install,
   runCommands,
   uninstall,
-} = require("../helpers/unix.ts");
-
-const {
-  systemServicePath,
-  userServicePath,
-} = require("../helpers/index.ts");
+} from "../helpers/unix"
 
 async function installService(mode: string) {
   try {

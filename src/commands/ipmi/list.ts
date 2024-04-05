@@ -1,10 +1,11 @@
 import {Command} from '@oclif/core'
-const { closeDb, getCredentials, getServers, openOrCreateDatabase } = require('../../db/index.ts')
-const { checkAndRefreshToken } = require('../../firebase/auth.ts')
 const Table = require("cli-table3");
 
+import { closeDb, getCredentials, getServers, openOrCreateDatabase } from '../../db/index'
+import { checkAndRefreshToken } from '../../firebase/auth'
+
 export default class List extends Command {
-  static description = 'List all servers'
+  static description = 'List IPMI accounts'
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',
@@ -14,7 +15,7 @@ export default class List extends Command {
     const db = await openOrCreateDatabase();
     if (!(await checkAndRefreshToken(db))) return;
 
-    const credentials = await getCredentials(db);
+    const credentials: any = await getCredentials(db);
     
     if (credentials.length === 0) {
       console.log("No IPMI credentials found. Use `rmagent ipmi set` to add IPMI accounts.");
@@ -26,7 +27,7 @@ export default class List extends Command {
       head: ["Server Address", "Server Name", "IPMI Address", "Port", "Flags", "Username"],
     });
 
-    const servers = await getServers(db);
+    const servers: any = await getServers(db);
 
     for (const credential of credentials) {
       const server = servers.find((s: any) => s.id === credential.server_id);

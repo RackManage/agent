@@ -1,6 +1,8 @@
 import {Command} from '@oclif/core'
-const { closeDb, getConfigData, openOrCreateDatabase } = require('../db/index.ts')
-const { checkAndRefreshToken } = require('../firebase/auth.ts')
+
+import { closeDb, getConfigData, openOrCreateDatabase } from '../db'
+import { checkAndRefreshToken } from '../firebase/auth'
+
 const Table = require('cli-table');
 const packageVersion = require('../../package.json').version;
 
