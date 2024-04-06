@@ -100,7 +100,7 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "^18",
     "@types/promptly": "^3.0.5",
-    "chai": "^4",
+    "chai": "^5",
     "eslint": "^8.57.0",
     "eslint-config-oclif": "^5",
     "eslint-config-oclif-typescript": "^3",
