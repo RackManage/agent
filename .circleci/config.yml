@@ -49,7 +49,7 @@ jobs:
       - run:
           name: Pack Windows Installer
           command: |
-            yarn oclif pack windows
+            yarn oclif pack win
       - store_artifacts:
           path: dist/win32
 
