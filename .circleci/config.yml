@@ -5,18 +5,21 @@ orbs:
   gh: circleci/github-cli@2.0
   aws-cli: circleci/aws-cli@4.1.3
 
-prep-env: &prep-env
-  - run: &apt-deps |
+commands:
+  prep-env:
+    description: "Prepare environment"
+    steps:
+      - run: |
           sudo apt-get update
           sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
-  - checkout
-  - node/install:
-      install-yarn: true
-      node-version: '18' 
-  - run: node --version
-  - node/install-packages:
-      pkg-manager: yarn
-      override-ci-command: yarn install --frozen-lockfile
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18'
+      - run: node --version
+      - node/install-packages:
+          pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
 
 branch-filters: &branch-filters
   tags:
@@ -30,7 +33,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      &prep-env
+      - prep-env
       - run:
           name: Pack tarballs
           command: |
@@ -48,7 +51,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      &prep-env
+      - prep-env
       - run:
           name: Pack Windows Installer
           command: |
@@ -62,7 +65,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      &prep-env
+      - prep-env
       - run:
           name: Pack MacOS Installer
           command: |
@@ -76,7 +79,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      &prep-env
+      - prep-env
       - aws-cli/install
       - run:
           name: Pack Debian Installer
