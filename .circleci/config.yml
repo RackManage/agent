@@ -1,0 +1,92 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.2
+  gh: circleci/github-cli@2.0
+
+jobs:
+  pack-tarballs:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: |
+          apt-get update
+          apt-get install -y p7zip-full
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18' 
+      - run: node --version
+      - node/install-packages
+      - run:
+          name: Pack tarballs
+          command: |
+            yarn oclif pack tarballs
+      - run: 
+          name: Delete non-tarball files
+          command: |
+            find dist -type f -not -name '*.tar.gz' -not -name '*.tar.xz' -not -name '*.buildmanifest' -delete
+      - store_artifacts:
+          path: dist
+
+  pack-windows:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: |
+          apt-get update
+          apt-get install -y nsis p7zip-full
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18' 
+      - run: node --version
+      - node/install-packages
+      - run:
+          name: Pack Windows Installer
+          command: |
+            yarn oclif pack windows
+      - store_artifacts:
+          path: dist/win32
+
+  pack-mac:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18' 
+      - run: node --version
+      - node/install-packages
+      - run:
+          name: Pack MacOS Installer
+          command: |
+            yarn oclif pack macos
+      - store_artifacts:
+          path: dist/macos
+
+  pack-deb:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: |
+          apt-get update
+          apt-get install -y apt-utils
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18' 
+      - run: node --version
+      - node/install-packages
+      - run:
+          name: Pack Debian Installer
+          command: |
+            yarn oclif pack deb
+      - store_artifacts:
+          path: dist/deb
+
+workflows:
+  build:
+    jobs:
+      - pack-windows

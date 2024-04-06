@@ -22,18 +22,333 @@ For other issues, [submit a support ticket](https://support.rackmanage.io/).
 
 
 <!-- commands -->
-# Command Topics
+* [`rmagent help [COMMAND]`](#rmagent-help-command)
+* [`rmagent ipmi list`](#rmagent-ipmi-list)
+* [`rmagent ipmi set`](#rmagent-ipmi-set)
+* [`rmagent ipmi test`](#rmagent-ipmi-test)
+* [`rmagent login [TOKEN]`](#rmagent-login-token)
+* [`rmagent logout`](#rmagent-logout)
+* [`rmagent server add`](#rmagent-server-add)
+* [`rmagent server list`](#rmagent-server-list)
+* [`rmagent service install`](#rmagent-service-install)
+* [`rmagent service start`](#rmagent-service-start)
+* [`rmagent service stop`](#rmagent-service-stop)
+* [`rmagent service uninstall`](#rmagent-service-uninstall)
+* [`rmagent status`](#rmagent-status)
+* [`rmagent update [CHANNEL]`](#rmagent-update-channel)
+* [`rmagent version`](#rmagent-version)
 
-* [`rmagent help`](docs/help.md) - Display help for rmagent.
-* [`rmagent ipmi`](docs/ipmi.md) - Manage IPMI settings for servers
-* [`rmagent login`](docs/login.md) - Connect agent to Rack Manage account
-* [`rmagent logout`](docs/logout.md) - Disconnect agent from Rack Manage account
-* [`rmagent server`](docs/server.md) - Manage servers monitored by the agent
-* [`rmagent service`](docs/service.md) - Manage the agent background service
-* [`rmagent status`](docs/status.md) - Check the status of the agent
-* [`rmagent update`](docs/update.md) - update the rmagent CLI
-* [`rmagent version`](docs/version.md)
+## `rmagent help [COMMAND]`
 
+Display help for rmagent.
+
+```
+USAGE
+  $ rmagent help [COMMAND...] [-n]
+
+ARGUMENTS
+  COMMAND...  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for rmagent.
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.20/src/commands/help.ts)_
+
+## `rmagent ipmi list`
+
+List IPMI accounts
+
+```
+USAGE
+  $ rmagent ipmi list
+
+DESCRIPTION
+  List IPMI accounts
+
+EXAMPLES
+  $ rmagent ipmi list
+```
+
+_See code: [src/commands/ipmi/list.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/ipmi/list.ts)_
+
+## `rmagent ipmi set`
+
+Set IPMI account for a server
+
+```
+USAGE
+  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u <value>]
+
+FLAGS
+  -a, --address=<value>   IPMI address
+  -f, --flags=<value>     Extra ipmitool flags
+  -p, --password=<value>  IPMI password
+  -p, --port=<value>      Port to monitor
+  -s, --server=<value>    Server address
+  -u, --username=<value>  IPMI username
+
+DESCRIPTION
+  Set IPMI account for a server
+
+EXAMPLES
+  $ rmagent ipmi set
+```
+
+_See code: [src/commands/ipmi/set.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/ipmi/set.ts)_
+
+## `rmagent ipmi test`
+
+Test IPMI connection
+
+```
+USAGE
+  $ rmagent ipmi test [-s <value>]
+
+FLAGS
+  -s, --server=<value>  Server address
+
+DESCRIPTION
+  Test IPMI connection
+
+EXAMPLES
+  $ rmagent ipmi test
+```
+
+_See code: [src/commands/ipmi/test.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/ipmi/test.ts)_
+
+## `rmagent login [TOKEN]`
+
+Connect agent to Rack Manage account
+
+```
+USAGE
+  $ rmagent login [TOKEN]
+
+ARGUMENTS
+  TOKEN  Agent token
+
+DESCRIPTION
+  Connect agent to Rack Manage account
+
+EXAMPLES
+  $ rmagent login
+```
+
+_See code: [src/commands/login.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/login.ts)_
+
+## `rmagent logout`
+
+Disconnect agent from Rack Manage account
+
+```
+USAGE
+  $ rmagent logout
+
+DESCRIPTION
+  Disconnect agent from Rack Manage account
+
+EXAMPLES
+  $ rmagent logout
+```
+
+_See code: [src/commands/logout.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/logout.ts)_
+
+## `rmagent server add`
+
+Add a server
+
+```
+USAGE
+  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u <value>] [-m
+    <value>] [-n <value>] [-p <value>] [-s <value>]
+
+FLAGS
+  -P, --ipmiPassword=<value>  IPMI password
+  -a, --ipmiAddress=<value>   IPMI address
+  -f, --ipmiFlags=<value>     Extra ipmitool flags
+  -i, --interval=<value>      Interval in minutes
+  -m, --mode=<value>          Monitoring mode (tcp, udp, http, https)
+  -n, --name=<value>          Name of the server
+  -o, --ipmiPort=<value>      IPMI port
+  -p, --port=<value>          Port to monitor
+  -s, --server=<value>        Server address
+  -u, --ipmiUsername=<value>  IPMI username
+
+DESCRIPTION
+  Add a server
+
+EXAMPLES
+  $ rmagent server add
+```
+
+_See code: [src/commands/server/add.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/server/add.ts)_
+
+## `rmagent server list`
+
+List all servers
+
+```
+USAGE
+  $ rmagent server list
+
+DESCRIPTION
+  List all servers
+
+EXAMPLES
+  $ rmagent server list
+```
+
+_See code: [src/commands/server/list.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/server/list.ts)_
+
+## `rmagent service install`
+
+Installs the agent service
+
+```
+USAGE
+  $ rmagent service install [-f] [-t <value>]
+
+FLAGS
+  -f, --force            Force the installation without confirmation
+  -t, --trigger=<value>  When to trigger the service (login, boot). Sudo permissions required for boot trigger.
+
+DESCRIPTION
+  Installs the agent service
+
+EXAMPLES
+  $ rmagent service install
+```
+
+_See code: [src/commands/service/install.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/service/install.ts)_
+
+## `rmagent service start`
+
+Start the agent service
+
+```
+USAGE
+  $ rmagent service start
+
+DESCRIPTION
+  Start the agent service
+
+EXAMPLES
+  $ rmagent service start
+```
+
+_See code: [src/commands/service/start.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/service/start.ts)_
+
+## `rmagent service stop`
+
+Stop the agent service
+
+```
+USAGE
+  $ rmagent service stop
+
+DESCRIPTION
+  Stop the agent service
+
+EXAMPLES
+  $ rmagent service stop
+```
+
+_See code: [src/commands/service/stop.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/service/stop.ts)_
+
+## `rmagent service uninstall`
+
+Uninstalls the agent service
+
+```
+USAGE
+  $ rmagent service uninstall
+
+DESCRIPTION
+  Uninstalls the agent service
+
+EXAMPLES
+  $ rmagent service uninstall
+```
+
+_See code: [src/commands/service/uninstall.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/service/uninstall.ts)_
+
+## `rmagent status`
+
+Check the status of the agent
+
+```
+USAGE
+  $ rmagent status
+
+DESCRIPTION
+  Check the status of the agent
+
+EXAMPLES
+  $ rmagent status
+```
+
+_See code: [src/commands/status.ts](https://github.com/cdgco/RackManage-Agent/blob/v0.0.1/src/commands/status.ts)_
+
+## `rmagent update [CHANNEL]`
+
+update the rmagent CLI
+
+```
+USAGE
+  $ rmagent update [CHANNEL] [-a] [--force] [-i | -v <value>]
+
+FLAGS
+  -a, --available        See available versions.
+  -i, --interactive      Interactively select version to install. This is ignored if a channel is provided.
+  -v, --version=<value>  Install a specific version.
+      --force            Force a re-download of the requested version.
+
+DESCRIPTION
+  update the rmagent CLI
+
+EXAMPLES
+  Update to the stable channel:
+
+    $ rmagent update stable
+
+  Update to a specific version:
+
+    $ rmagent update --version 1.0.0
+
+  Interactively select version:
+
+    $ rmagent update --interactive
+
+  See available versions:
+
+    $ rmagent update --available
+```
+
+_See code: [@oclif/plugin-update](https://github.com/oclif/plugin-update/blob/v4.2.3/src/commands/update.ts)_
+
+## `rmagent version`
+
+```
+USAGE
+  $ rmagent version [--json] [--verbose]
+
+FLAGS
+  --verbose  Show additional information about the CLI.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+FLAG DESCRIPTIONS
+  --verbose  Show additional information about the CLI.
+
+    Additionally shows the architecture, node version, operating system, and versions of plugins that the CLI is using.
+```
+
+_See code: [@oclif/plugin-version](https://github.com/oclif/plugin-version/blob/v2.0.16/src/commands/version.ts)_
 <!-- commandsstop -->
 
 Developing
