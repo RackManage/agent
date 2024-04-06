@@ -61,7 +61,7 @@
     },
     "update": {
       "s3": {
-        "host": "https://rmagent-assets.rackmanage.io",
+        "host": "https://agent.rackmanage.io",
         "bucket": "rmagent",
         "xz": true
       }
