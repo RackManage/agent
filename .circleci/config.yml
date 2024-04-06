@@ -95,7 +95,7 @@ jobs:
                 "node_modules/keytar/build/Release/keytar.node"
               )
               for BINARY_PATH in "${BINARY_PATHS[@]}"; do
-                codesign --sign "Developer ID Application: $DEVELOPER_ID_APPLICATION" --timestamp --options runtime --entitlements entitlements.plist "$BINARY_PATH"
+                codesign --sign "Developer ID Application: $DEVELOPER_ID_APPLICATION" --timestamp --options runtime "$BINARY_PATH"
                 codesign -dvv "$BINARY_PATH"
               done
       - run:
