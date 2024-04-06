@@ -10,8 +10,8 @@ jobs:
       - image: cimg/base:stable
     steps:
       - run: |
-          apt-get update
-          apt-get install -y p7zip-full
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full
       - checkout
       - node/install:
           install-yarn: true
@@ -34,8 +34,8 @@ jobs:
       - image: cimg/base:stable
     steps:
       - run: |
-          apt-get update
-          apt-get install -y nsis p7zip-full
+          sudo apt-get update
+          sudo apt-get install -y nsis p7zip-full
       - checkout
       - node/install:
           install-yarn: true
@@ -71,8 +71,8 @@ jobs:
       - image: cimg/base:stable
     steps:
       - run: |
-          apt-get update
-          apt-get install -y apt-utils
+          sudo apt-get update
+          sudo apt-get install -y apt-utils
       - checkout
       - node/install:
           install-yarn: true
