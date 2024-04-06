@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   node: circleci/node@5.0.2
   gh: circleci/github-cli@2.0
+  aws-cli: circleci/aws-cli@4.1.3
 
 jobs:
   pack-tarballs:
@@ -28,8 +29,10 @@ jobs:
           name: Delete non-tarball files
           command: |
             find dist -type f -not -name '*.tar.gz' -not -name '*.tar.xz' -not -name '*.buildmanifest' -delete
-      - store_artifacts:
-          path: dist
+      - run:
+          name: Upload Tarballs
+          command: |
+            yarn oclif upload tarballs
 
   pack-windows:
     docker:
@@ -50,8 +53,10 @@ jobs:
           name: Pack Windows Installer
           command: |
             yarn oclif pack win
-      - store_artifacts:
-          path: dist/win32
+      - run:
+          name: Upload Windows Installer
+          command: |
+            yarn oclif upload win
 
   pack-mac:
     docker:
@@ -72,8 +77,10 @@ jobs:
           name: Pack MacOS Installer
           command: |
             yarn oclif pack macos
-      - store_artifacts:
-          path: dist/macos
+      - run:
+          name: Upload MacOS Installer
+          command: |
+            yarn oclif upload macos
 
   pack-deb:
     docker:
@@ -82,6 +89,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y apt-utils libsecret-1-dev
+      - aws-cli/install
       - checkout
       - node/install:
           install-yarn: true
@@ -94,10 +102,43 @@ jobs:
           name: Pack Debian Installer
           command: |
             yarn oclif pack deb
-      - store_artifacts:
-          path: dist/deb
-
+      - run:
+          name: Update install.sh
+          command: |
+            aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
+      - run:
+          name: Upload Debian Installer
+          command: |
+            aws s3 cp dist/deb s3://rmagent/apt --recursive
 workflows:
   build:
     jobs:
-      - pack-windows
+      - pack-windows:
+          filters:
+            branches:
+              only:
+                - main
+            tags:
+              only: /^v.*/
+      - pack-tarballs:
+          filters:
+            branches:
+              only:
+                - main
+            tags:
+              only: /^v.*/
+      # These are disabled until we setup code signing on CircleCI
+      # - pack-deb:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      #       tags:
+      #         only: /^v.*/
+      # - pack-mac:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      #       tags:
+      #         only: /^v.*/
