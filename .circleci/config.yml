@@ -11,7 +11,7 @@ jobs:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install -y p7zip-full
+          sudo apt-get install -y p7zip-full libsecret-1-dev
       - checkout
       - node/install:
           install-yarn: true
@@ -37,7 +37,7 @@ jobs:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install -y nsis p7zip-full
+          sudo apt-get install -y nsis p7zip-full libsecret-1-dev
       - checkout
       - node/install:
           install-yarn: true
@@ -57,6 +57,9 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev
       - checkout
       - node/install:
           install-yarn: true
@@ -78,7 +81,7 @@ jobs:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install -y apt-utils
+          sudo apt-get install -y apt-utils libsecret-1-dev
       - checkout
       - node/install:
           install-yarn: true
