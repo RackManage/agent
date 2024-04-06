@@ -72,18 +72,31 @@ jobs:
       - run:
           name: Install Certs
           command: |
-              # Requires OSX_INSTALLER_CERT_BASE64 and OSX_INSTALLER_CERT_PASSWORD
-              CERTIFICATE="${TMPDIR}/certificate.p12"
+              # Requires OSX_INSTALLER_CERT_BASE64, OSX_INSTALLER_CERT_PASSWORD, OSX_APPLICATION_CERT_BASE64, and OSX_APPLICATION_CERT_PASSWORD
+              INSTALLER_CERTIFICATE="${TMPDIR}/installer_certificate.p12"
+              APPLICATION_CERTIFICATE="${TMPDIR}/application_certificate.p12"
               OSX_KEYCHAIN="${TMPDIR}/app-signing.keychain-db"
-              echo -n "$OSX_INSTALLER_CERT_BASE64" | base64 --decode --output $CERTIFICATE
+              echo -n "$OSX_INSTALLER_CERT_BASE64" | base64 --decode --output $INSTALLER_CERTIFICATE
+              echo -n "$OSX_APPLICATION_CERT_BASE64" | base64 --decode --output $APPLICATION_CERTIFICATE
               OSX_KEYCHAIN_PASSWORD=`openssl rand -hex 12`
               security create-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
               security unlock-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
               security set-keychain-settings -lut 21600 $OSX_KEYCHAIN
-              security import $CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_INSTALLER_CERT_PASSWORD"
+              security import $INSTALLER_CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_INSTALLER_CERT_PASSWORD"
+              security import $APPLICATION_CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_APPLICATION_CERT_PASSWORD"
               security set-key-partition-list -S apple-tool:,apple: -k "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
               security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
               security find-identity
+      # - run:
+      #     name: Sign Node Binaries
+      #     command: |
+      #         BINARY_PATHS=(
+      #           "node_modules/sqlite3/build/Release/node_sqlite3.node"
+      #           "node_modules/keytar/build/Release/keytar.node"
+      #         )
+      #         for BINARY_PATH in "${BINARY_PATHS[@]}"; do
+      #           codesign --sign "Developer ID Application: $DEVELOPER_ID_APPLICATION" --timestamp --options runtime --entitlements entitlements.plist "$BINARY_PATH"
+      #         done
       - run:
           name: Pack MacOS Installer
           command: |
@@ -158,5 +171,7 @@ workflows:
       - pack-windows:
           filters:
             <<: *branch-filters
-      - pack-mac
+      - pack-mac:
+          filters:
+            <<: *branch-filters
       - pack-deb
