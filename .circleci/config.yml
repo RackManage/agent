@@ -19,6 +19,7 @@ jobs:
       - run: node --version
       - node/install-packages:
           pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
       - run:
           name: Pack tarballs
           command: |
@@ -42,7 +43,9 @@ jobs:
           install-yarn: true
           node-version: '18' 
       - run: node --version
-      - node/install-packages
+      - node/install-packages:
+          pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
       - run:
           name: Pack Windows Installer
           command: |
@@ -59,7 +62,9 @@ jobs:
           install-yarn: true
           node-version: '18' 
       - run: node --version
-      - node/install-packages
+      - node/install-packages:
+          pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
       - run:
           name: Pack MacOS Installer
           command: |
@@ -79,7 +84,9 @@ jobs:
           install-yarn: true
           node-version: '18' 
       - run: node --version
-      - node/install-packages
+      - node/install-packages:
+          pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
       - run:
           name: Pack Debian Installer
           command: |
