@@ -15,7 +15,8 @@
   "files": [
     "/bin",
     "/dist",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/theme.json"
   ],
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
@@ -71,7 +72,8 @@
     ],
     "additionalHelpFlags": [
       "-h"
-    ]
+    ],
+    "theme": "theme.json"
   },
   "dependencies": {
     "@oclif/core": "^3",

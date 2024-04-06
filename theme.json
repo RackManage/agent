@@ -1,0 +1,16 @@
+{
+  "aliases": "none",
+  "bin": "greenBright",
+  "command": "greenBright",
+  "commandSummary": "none",
+  "dollarSign": "none",
+  "flag": "greenBright",
+  "flagDefaultValue": "greenBright",
+  "flagOptions": "greenBright",
+  "flagRequired": "red",
+  "flagSeparator": "none",
+  "sectionDescription": "none",
+  "sectionHeader": "none",
+  "topic": "greenBright",
+  "version": "none"
+}
