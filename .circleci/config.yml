@@ -32,16 +32,13 @@ jobs:
   pack-tarballs:
     docker:
       - image: cimg/base:stable
+    resource_class: small
     steps:
       - prep-env
       - run:
           name: Pack tarballs
           command: |
             yarn oclif pack tarballs
-      - run: 
-          name: Delete non-tarball files
-          command: |
-            find dist -type f -not -name '*.tar.gz' -not -name '*.tar.xz' -not -name '-buildmanifest' -delete
       - run:
           name: Upload Tarballs
           command: |
@@ -50,6 +47,7 @@ jobs:
   pack-windows:
     docker:
       - image: cimg/base:stable
+    resource_class: small
     steps:
       - prep-env
       - run:
@@ -62,14 +60,53 @@ jobs:
             yarn oclif upload win
 
   pack-mac:
-    docker:
-      - image: cimg/base:stable
+    macos:
+      xcode: 15.2.0
     steps:
       - prep-env
+      - run:
+          name: Install Certs
+          command: |
+              # Requires OSX_INSTALLER_CERT_BASE64 and OSX_INSTALLER_CERT_PASSWORD
+              CERTIFICATE="${TMPDIR}/certificate.p12"
+              OSX_KEYCHAIN="${TMPDIR}/app-signing.keychain-db"
+              echo -n "$OSX_INSTALLER_CERT_BASE64" | base64 --decode --output $CERTIFICATE
+              OSX_KEYCHAIN_PASSWORD=`openssl rand -hex 12`
+              security create-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security unlock-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security set-keychain-settings -lut 21600 $OSX_KEYCHAIN
+              security import $CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_INSTALLER_CERT_PASSWORD"
+              security set-key-partition-list -S apple-tool:,apple: -k "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
+              security find-identity
       - run:
           name: Pack MacOS Installer
           command: |
             yarn oclif pack macos
+      - run:
+          name: Notarize MacOS Installer
+          command: |
+            # Requires APPLE_ID, APPLE_ID_APP_PASSWORD, and APPLE_TEAM_ID
+            xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+
+            for FILE_PATH in dist/macos/*.pkg; do
+                echo "Notarizing $FILE_PATH..."
+                xcrun notarytool submit "$FILE_PATH" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
+                notarization_status=$(jq -r .status "${TMPDIR}/notarization_log.json")
+                notarization_id=$(jq -r .id "${TMPDIR}/notarization_log.json")
+                echo "For notarization id ${notarization_id} the status is ${notarization_status}"
+
+                if [ "${notarization_status}" = "Accepted" ]; then
+                  echo "Stapling $FILE_PATH..."
+                  xcrun stapler staple "$FILE_PATH"
+                  spctl --assess -vv --type install "$FILE_PATH"
+                else
+                  echo "Notarization unsuccessful for $FILE_PATH"
+                  xcrun notarytool log ${notarization_id} --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
+                  jq . "${TMPDIR}/notarization_log.json"
+                  exit 1
+                fi
+            done
       - run:
           name: Upload MacOS Installer
           command: |
@@ -78,9 +115,21 @@ jobs:
   pack-deb:
     docker:
       - image: cimg/base:stable
+    resource_class: small
     steps:
       - prep-env
       - aws-cli/install
+      - run:
+          name: Import GPG Key
+          command: |
+            echo "$GPG_PRIVATE_KEY_BASE64" | base64 --decode | gpg --import
+      - run:
+          name: Unlock Keychain
+          command: |
+            echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+            gpg-connect-agent reloadagent /bye
+            echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+            
       - run:
           name: Pack Debian Installer
           command: |
@@ -96,16 +145,11 @@ jobs:
 workflows:
   build:
     jobs:
-      - pack-windows:
-          filters:
-            <<: *branch-filters
       - pack-tarballs:
           filters:
             <<: *branch-filters
-      # These are disabled until we setup code signing on CircleCI
-      # - pack-deb:
-      #     filters:
-      #       <<: *branch-filters
-      # - pack-mac:
-      #     filters:  
-      #       <<: *branch-filters
+      - pack-windows:
+          filters:
+            <<: *branch-filters
+      - pack-mac
+      - pack-deb
