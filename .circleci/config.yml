@@ -9,9 +9,6 @@ commands:
   prep-env:
     description: "Prepare environment"
     steps:
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
       - checkout
       - node/install:
           install-yarn: true
@@ -20,6 +17,12 @@ commands:
       - node/install-packages:
           pkg-manager: yarn
           override-ci-command: yarn install --frozen-lockfile
+  install-deps:
+    description: "Install Linux Dependencies"
+    steps:
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
 
 branch-filters: &branch-filters
   tags:
@@ -35,6 +38,7 @@ jobs:
     resource_class: small
     steps:
       - prep-env
+      - install-deps
       - run:
           name: Pack tarballs
           command: |
@@ -50,6 +54,7 @@ jobs:
     resource_class: small
     steps:
       - prep-env
+      - install-deps
       - run:
           name: Pack Windows Installer
           command: |
@@ -118,11 +123,12 @@ jobs:
     resource_class: small
     steps:
       - prep-env
+      - install-deps
       - aws-cli/install
       - run:
           name: Import GPG Key
           command: |
-            echo "$GPG_PRIVATE_KEY_BASE64" | base64 --decode | gpg --import
+            echo $GPG_PRIVATE_KEY_BASE64 | base64 --decode | gpg --import
       - run:
           name: Unlock Keychain
           command: |
