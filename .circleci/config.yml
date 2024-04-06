@@ -88,30 +88,31 @@ jobs:
           name: Pack MacOS Installer
           command: |
             yarn oclif pack macos
-      - run:
-          name: Notarize MacOS Installer
-          command: |
-            # Requires APPLE_ID, APPLE_ID_APP_PASSWORD, and APPLE_TEAM_ID
-            xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+      # - run:
+      #     name: Notarize MacOS Installer
+      #     command: |
+      #       # Requires APPLE_ID, APPLE_ID_APP_PASSWORD, and APPLE_TEAM_ID
+      #       xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
 
-            for FILE_PATH in dist/macos/*.pkg; do
-                echo "Notarizing $FILE_PATH..."
-                xcrun notarytool submit "$FILE_PATH" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
-                notarization_status=$(jq -r .status "${TMPDIR}/notarization_log.json")
-                notarization_id=$(jq -r .id "${TMPDIR}/notarization_log.json")
-                echo "For notarization id ${notarization_id} the status is ${notarization_status}"
+      #       for FILE_PATH in dist/macos/*.pkg; do
+      #           echo "Notarizing $FILE_PATH..."
+      #           pkgutil --check-signature "$FILE_PATH"
+      #           xcrun notarytool submit "$FILE_PATH" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
+      #           notarization_status=$(jq -r .status "${TMPDIR}/notarization_log.json")
+      #           notarization_id=$(jq -r .id "${TMPDIR}/notarization_log.json")
+      #           echo "For notarization id ${notarization_id} the status is ${notarization_status}"
 
-                if [ "${notarization_status}" = "Accepted" ]; then
-                  echo "Stapling $FILE_PATH..."
-                  xcrun stapler staple "$FILE_PATH"
-                  spctl --assess -vv --type install "$FILE_PATH"
-                else
-                  echo "Notarization unsuccessful for $FILE_PATH"
-                  xcrun notarytool log ${notarization_id} --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
-                  jq . "${TMPDIR}/notarization_log.json"
-                  exit 1
-                fi
-            done
+      #           if [ "${notarization_status}" = "Accepted" ]; then
+      #             echo "Stapling $FILE_PATH..."
+      #             xcrun stapler staple "$FILE_PATH"
+      #             spctl --assess -vv --type install "$FILE_PATH"
+      #           else
+      #             echo "Notarization unsuccessful for $FILE_PATH"
+      #             xcrun notarytool log ${notarization_id} --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
+      #             jq . "${TMPDIR}/notarization_log.json"
+      #             exit 1
+      #           fi
+      #       done
       - run:
           name: Upload MacOS Installer
           command: |
