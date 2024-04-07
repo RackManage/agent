@@ -19,12 +19,12 @@ commands:
   prep-env:
     description: "Prepare environment"
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
           name: Load Workspace Variables 
           command: cat bash.env > $BASH_ENV
-      - checkout
       - node/install:
           install-yarn: true
           node-version: '18'
