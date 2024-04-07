@@ -192,6 +192,14 @@ jobs:
           condition:
             or:
               - not:
+                  equal:  [ stable, << pipeline.parameters.channel >> ]
+              - equal:  [ "", << pipeline.git.tag >> ]
+          steps:
+            - run: echo "Skipping Debian Release"
+      - when:
+          condition:
+            or:
+              - not:
                   equal:  [ "", << pipeline.git.tag >> ]
               - equal:  [ stable, << pipeline.parameters.channel >> ]
           steps:
