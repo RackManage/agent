@@ -132,8 +132,8 @@ jobs:
       - run:
           name: Import GPG Key
           command: |
-            echo -e "$GPG_PRIVATE_KEY" | gpg --import --batch
-            gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
+            echo -e "$GPG_PRIVATE_KEY" | gpg --import
+            # gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
       #- run:
       #    name: Unlock Keychain
       #    command: |
