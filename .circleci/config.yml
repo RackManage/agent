@@ -132,7 +132,8 @@ jobs:
       - run:
           name: Import GPG Key
           command: |
-            echo -e "$GPG_PRIVATE_KEY" | gpg --import
+            echo -n "$GPG_PRIVATE_KEY" | base64 --decode > signing-key.gpg
+            gpg --import signing-key.gpg
             # gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
       #- run:
       #    name: Unlock Keychain
