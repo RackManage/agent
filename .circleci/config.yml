@@ -124,26 +124,21 @@ jobs:
   pack-deb:
     docker:
       - image: cimg/base:stable
-    resource_class: large
+    resource_class: medium
     steps:
       - prep-env
       - install-deps
       - aws-cli/install
-      # - run:
-      #     name: Import GPG Key
-      #     command: |
-      #       echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
-      # - run:
-      #    name: Unlock Keychain
-      #    command: |
-      #      echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-      #      gpg-connect-agent reloadagent /bye
-      #      echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
-      # - run: 
-      #     name: Test Signing
-      #     command: |
-      #       echo "test" > test.txt
-      #       gpg --batch --yes --pinentry-mode loopback -u "carter@rackmanage.io" --sign test.txt
+      - run:
+          name: Import GPG Key
+          command: |
+            echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+      - run:
+         name: Unlock Keychain
+         command: |
+           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+           gpg-connect-agent reloadagent /bye
+           echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
       - run:
          name: Pack Debian Installer
          command: |
@@ -151,7 +146,7 @@ jobs:
       - run:
          name: Update install.sh
          command: |
-           aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
+           aws s3 cp scripts/install.sh s3://rmagent/install.sh
       - run:
          name: Upload Debian Installer
          command: |
