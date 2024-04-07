@@ -119,14 +119,6 @@ jobs:
     steps:
       - prep-env
       - run:
-          name: Pack MacOS Tarballs
-          command: |
-            yarn oclif pack tarballs --targets darwin-x64,darwin-arm64 --parallel --xz
-      - run:
-          name: Upload MacOS Tarballs
-          command: |
-            yarn oclif upload tarballs --targets darwin-x64,darwin-arm64 --xz
-      - run:
           name: Install Certs
           command: |
               # Requires OSX_INSTALLER_CERT_BASE64, OSX_INSTALLER_CERT_PASSWORD, OSX_APPLICATION_CERT_BASE64, and OSX_APPLICATION_CERT_PASSWORD
@@ -144,6 +136,14 @@ jobs:
               security set-key-partition-list -S apple-tool:,apple: -k "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
               security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
               security find-identity
+      - run:
+          name: Pack MacOS Tarballs
+          command: |
+            yarn oclif pack tarballs --targets darwin-x64,darwin-arm64 --parallel --xz
+      - run:
+          name: Upload MacOS Tarballs
+          command: |
+            yarn oclif upload tarballs --targets darwin-x64,darwin-arm64 --xz
       - run:
           name: Pack MacOS Installer
           command: |
