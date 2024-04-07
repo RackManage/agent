@@ -78,6 +78,8 @@ jobs:
             echo "export COMMIT_SHA=$(git rev-parse --short HEAD)" >> $BASH_ENV
             source $BASH_ENV
 
+            cp $BASH_ENV bash.env
+
             echo "Configured Release Channel: $RELEASE_CHANNEL"
             echo "Configured Release Version: $RELEASE_VERSION"
             echo "Commit SHA: $COMMIT_SHA"
