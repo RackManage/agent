@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   channel:
     type: string
-    default: "beta"
+    default: ""
     description: Release channel to publish to. "stable" or "beta".
 
 orbs:
