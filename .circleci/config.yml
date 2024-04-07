@@ -201,7 +201,7 @@ jobs:
     steps:
       - when:
           condition:
-            or:
+            and:
               - not:
                   equal:  [ stable, << pipeline.parameters.channel >> ]
               - equal:  [ "", << pipeline.git.tag >> ]
