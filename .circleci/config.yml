@@ -35,7 +35,7 @@ jobs:
   pack-tarballs:
     docker:
       - image: cimg/base:stable
-    resource_class: small
+    resource_class: medium
     steps:
       - prep-env
       - install-deps
@@ -168,4 +168,6 @@ workflows:
       - pack-mac:
           filters:
             <<: *branch-filters
-      - pack-deb
+      - pack-deb:
+          filters:
+            <<: *branch-filters
