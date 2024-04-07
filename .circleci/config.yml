@@ -41,6 +41,15 @@ branch-filters: &branch-filters
 
 jobs:
   prepare-release:
+    parameters:
+      manual_release_channel:
+        type: string
+        default: ""
+      manual_release_version:
+        type: string
+        default: ""
+    docker:
+      - image: cimg/base:stable
     steps:
       - checkout
       - run:
@@ -217,7 +226,9 @@ jobs:
 workflows:
   build:
     jobs:
-      - prepare-release
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.release_channel >>
+          manual_release_version: << pipeline.parameters.release_version >>
       - pack-tarballs:
           requires:
             - prepare-release
