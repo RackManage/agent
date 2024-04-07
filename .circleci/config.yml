@@ -133,18 +133,12 @@ jobs:
           name: Import GPG Key
           command: |
             echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
-            # echo -n "$GPG_PRIVATE_KEY" | base64 --decode > signing-key.gpg
-            # # gpg -v --import signing-key.gpg
-            # echo "$GPG_PASSPHRASE" | gpg -v --batch --yes --passphrase-fd 0 signing-key.gpg --import
-            # #gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
-            echo "Hello, World!" > testfile.txt
-            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" -u "carter@rackmanage.io" --sign testfile.txt
-      #- run:
-      #    name: Unlock Keychain
-      #    command: |
-      #      echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-      #      gpg-connect-agent reloadagent /bye
-      #      echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+      - run:
+         name: Unlock Keychain
+         command: |
+           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+           gpg-connect-agent reloadagent /bye
+           echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
             
       #- run:
       #    name: Pack Debian Installer
