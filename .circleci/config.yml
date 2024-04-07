@@ -1,0 +1,271 @@
+version: 2.1
+
+parameters:
+  channel:
+    type: string
+    default: ""
+    description: Release channel to publish to. "stable" or "beta".
+
+orbs:
+  node: circleci/node@5.0.2
+  gh: circleci/github-cli@2.0
+  aws-cli: circleci/aws-cli@4.1.3
+
+commands:
+  prep-env:
+    description: "Prepare environment"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load Workspace Variables 
+          command: cat bash.env > $BASH_ENV
+      - node/install:
+          install-yarn: true
+          node-version: '20'
+      - run: 
+          name: Check Node Version
+          command: node --version
+      - node/install-packages:
+          pkg-manager: yarn
+          override-ci-command: yarn install --frozen-lockfile
+  install-deps:
+    description: "Install Linux Dependencies"
+    steps:
+      - run:
+          name: Update & Install Packages
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
+
+jobs:
+  prepare-release:
+    parameters:
+      manual_release_channel:
+        type: string
+        default: ""
+      manual_release_version:
+        type: string
+        default: ""
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Determine Tag, Commit SHA, and Prepare Release Info
+          command: |
+            # Determine if a tag is present and set channel/version accordingly
+            CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || true)
+            RELEASE_VERSION=$(jq -r .version package.json)
+            if [ -n "$CURRENT_TAG" ]; then
+              RELEASE_CHANNEL="stable"
+            else
+              RELEASE_CHANNEL="beta"
+            fi
+
+            # Apply manual overrides if specified
+            if [ -n "<< parameters.manual_release_channel >>" ]; then
+              RELEASE_CHANNEL="<< parameters.manual_release_channel >>"
+            fi
+
+            # Export for use in subsequent steps
+            echo "export RELEASE_CHANNEL=${RELEASE_CHANNEL}" >> $BASH_ENV
+            echo "export RELEASE_VERSION=${RELEASE_VERSION}" >> $BASH_ENV
+            echo "export COMMIT_SHA=$(git rev-parse --short HEAD)" >> $BASH_ENV
+            source $BASH_ENV
+
+            cp $BASH_ENV bash.env
+
+            echo "Configured Release Channel: $RELEASE_CHANNEL"
+            echo "Configured Release Version: $RELEASE_VERSION"
+            echo "Commit SHA: $COMMIT_SHA"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bash.env
+
+  pack-windows:
+    docker:
+      - image: cimg/base:stable
+    resource_class: medium
+    steps:
+      - prep-env
+      - install-deps
+      - run:
+          name: Pack Windows Tarballs
+          command: |
+            yarn oclif pack tarballs --targets win32-x64,win32-x86 --parallel --xz
+      - run:
+          name: Upload Windows Tarballs
+          command: |
+            yarn oclif upload tarballs --targets win32-x64,win32-x86 --xz
+      - run:
+          name: Pack Windows Installer
+          command: |
+            yarn oclif pack win
+      - run:
+          name: Upload Windows Installer
+          command: |
+            yarn oclif upload win
+      - run: 
+          name: Promote Windows Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win32-x64,win32-x86
+
+  pack-mac:
+    macos:
+      xcode: 15.2.0
+    steps:
+      - prep-env
+      - run:
+          name: Install Certs
+          command: |
+              # Requires OSX_INSTALLER_CERT_BASE64, OSX_INSTALLER_CERT_PASSWORD, OSX_APPLICATION_CERT_BASE64, and OSX_APPLICATION_CERT_PASSWORD
+              INSTALLER_CERTIFICATE="${TMPDIR}/installer_certificate.p12"
+              APPLICATION_CERTIFICATE="${TMPDIR}/application_certificate.p12"
+              OSX_KEYCHAIN="${TMPDIR}/app-signing.keychain-db"
+              echo -n "$OSX_INSTALLER_CERT_BASE64" | base64 --decode --output $INSTALLER_CERTIFICATE
+              echo -n "$OSX_APPLICATION_CERT_BASE64" | base64 --decode --output $APPLICATION_CERTIFICATE
+              OSX_KEYCHAIN_PASSWORD=`openssl rand -hex 12`
+              security create-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security unlock-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security set-keychain-settings -lut 21600 $OSX_KEYCHAIN
+              security import $INSTALLER_CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_INSTALLER_CERT_PASSWORD"
+              security import $APPLICATION_CERTIFICATE -k $OSX_KEYCHAIN -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security -P "$OSX_APPLICATION_CERT_PASSWORD"
+              security set-key-partition-list -S apple-tool:,apple: -k "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
+              security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
+              security find-identity
+      - run:
+          name: Pack MacOS Tarballs
+          command: |
+            yarn oclif pack tarballs --targets darwin-x64,darwin-arm64 --parallel --xz
+      - run:
+          name: Upload MacOS Tarballs
+          command: |
+            yarn oclif upload tarballs --targets darwin-x64,darwin-arm64 --xz
+      - run:
+          name: Pack MacOS Installer
+          command: |
+            yarn oclif pack macos
+      - run:
+          name: Notarize MacOS Installer
+          command: |
+            # Requires APPLE_ID, APPLE_ID_APP_PASSWORD, and APPLE_TEAM_ID
+            xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+
+            for FILE_PATH in dist/macos/*.pkg; do
+                echo "Notarizing $FILE_PATH..."
+                pkgutil --check-signature "$FILE_PATH"
+                xcrun notarytool submit "$FILE_PATH" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
+                notarization_status=$(jq -r .status "${TMPDIR}/notarization_log.json")
+                notarization_id=$(jq -r .id "${TMPDIR}/notarization_log.json")
+                echo "For notarization id ${notarization_id} the status is ${notarization_status}"
+
+                if [ "${notarization_status}" = "Accepted" ]; then
+                  echo "Stapling $FILE_PATH..."
+                  xcrun stapler staple "$FILE_PATH"
+                  spctl --assess -vv --type install "$FILE_PATH"
+                else
+                  echo "Notarization unsuccessful for $FILE_PATH"
+                  xcrun notarytool log ${notarization_id} --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
+                  jq . "${TMPDIR}/notarization_log.json"
+                  exit 1
+                fi
+            done
+      - run:
+          name: Upload MacOS Installer
+          command: |
+            yarn oclif upload macos
+      - run: 
+          name: Promote MacOS Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets darwin-x64,darwin-arm64
+
+  pack-linux:
+    docker:
+      - image: cimg/base:stable
+    resource_class: medium
+    steps:
+      - prep-env
+      - install-deps
+      - run:
+          name: Pack Linux Tarballs
+          command: |
+            yarn oclif pack tarballs --targets linux-x64,linux-arm64,linux-arm  --parallel --xz
+      - run:
+          name: Upload Linux Tarballs
+          command: |
+            yarn oclif upload tarballs --targets linux-x64,linux-arm64,linux-arm --xz
+      - run: 
+          name: Promote Linux Tarball Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets linux-x64,linux-arm64,linux-arm
+      - when:
+          condition:
+            and:
+              - not:
+                  equal: [ stable, << pipeline.parameters.channel >> ]
+              - equal: [ "", << pipeline.git.tag >> ]
+          steps:
+            - run: 
+                name: Check Debian Package Creation
+                command: |
+                  echo "Channel is not stable and no tag is present. Skipping Debian package creation."
+      - when:
+          condition:
+            or:
+              - not:
+                  equal: [ "", << pipeline.git.tag >> ]
+              - equal: [ stable, << pipeline.parameters.channel >> ]
+          steps:
+            - aws-cli/install
+            - run:
+                name: Import GPG Key
+                command: |
+                  echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+            - run:
+                name: Unlock Keychain
+                command: |
+                  echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+                  gpg-connect-agent reloadagent /bye
+                  echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+            - run:
+                name: Pack Debian Installer
+                command: |
+                  yarn oclif pack deb
+            - run:
+                name: Update install.sh
+                command: |
+                  aws s3 cp scripts/install.sh s3://rmagent/install.sh
+            - run:
+                name: Upload Debian Installer
+                command: |
+                  aws s3 cp dist/deb s3://rmagent/apt --recursive
+            - run:
+                name: Upload Release Key
+                command: |
+                  echo -n "$GPG_PUBLIC_KEY" | base64 --decode > Release.key
+                  aws s3 cp Release.key s3://rmagent/apt/Release.key
+workflows:
+  build_and_release:
+    when:
+      or:
+        - and:
+          - equal: [ main, << pipeline.git.branch >> ]
+          - not:
+              equal: [ "", << pipeline.git.tag >> ]
+        - not:
+            equal: [ "", << pipeline.parameters.channel >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-windows:
+          requires:
+            - prepare-release
+      - pack-mac:
+          requires:
+            - prepare-release
+      - pack-linux:
+          requires:
+            - prepare-release
