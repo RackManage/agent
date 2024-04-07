@@ -126,9 +126,9 @@ jobs:
       - image: cimg/base:stable
     resource_class: small
     steps:
-      - prep-env
-      - install-deps
-      - aws-cli/install
+      # - prep-env
+      # - install-deps
+      # - aws-cli/install
       - run:
           name: Import GPG Key
           command: |
@@ -139,18 +139,23 @@ jobs:
            echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
            gpg-connect-agent reloadagent /bye
            echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
-      - run:
-         name: Pack Debian Installer
-         command: |
-           yarn oclif pack deb
-      - run:
-         name: Update install.sh
-         command: |
-           aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
-      - run:
-         name: Upload Debian Installer
-         command: |
-           aws s3 cp dist/deb s3://rmagent/apt --recursive
+      - run: 
+          name: Test Signing
+          command: |
+            echo "test" > test.txt
+            gpg --batch --yes --pinentry-mode loopback -u "carter@rackmanage.io" --sign testfile.txt
+      # - run:
+      #    name: Pack Debian Installer
+      #    command: |
+      #      yarn oclif pack deb
+      # - run:
+      #    name: Update install.sh
+      #    command: |
+      #      aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
+      # - run:
+      #    name: Upload Debian Installer
+      #    command: |
+      #      aws s3 cp dist/deb s3://rmagent/apt --recursive
 workflows:
   build:
     jobs:
