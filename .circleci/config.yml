@@ -111,7 +111,7 @@ jobs:
       - run: 
           name: Promote Windows Release
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win-x64,win-x86
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win32-x64,win32-x86
 
   pack-mac:
     macos:
