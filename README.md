@@ -183,6 +183,39 @@ aws s3 cp scripts/install.sh s3://rmagent/install.sh
 aws s3 cp Release.key s3://rmagent/apt/Release.key
 ```
 
+## Automated Builds
+
+The agent is build and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing to the `main` branch with a tagged commit in the format `vX.Y.Z`.
+
+The build process relies on the following environment variables:
+
+| Variable                      | Value                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| APPLE_ID                      | Apple ID Username of Developer Account                                     |
+| APPLE_ID_APP_PASSWORD         | App-Specific Password for Developer Account                                |
+| APPLE_TEAM_ID                 | Apple Developer Team ID                                                    |
+| AWS_ACCESS_KEY_ID             | Cloudflare R2 Read / Write Access Key                                      |
+| AWS_ENDPOINT_URL_S3           | Cloudflare R2 Endpoint URL `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| AWS_SECRET_ACCESS_KEY         | Cloudflare R2 Secret Access Key                                            |
+| GPG_PASSPHRASE                | GPG Passphrase for Signing Debian Packages                                 |
+| GPG_PRIVATE_KEY               | GPG Private Key for Signing Debian Packages (base64 encoded armored)       |
+| GPG_PUBLIC_KEY                | GPG Public Key for Signing Debian Packages (base64 encoded armored)        |
+| OSX_APPLICATION_CERT_BASE64   | Apple Developer Application Certificate (base64 encoded p12)               |
+| OSX_APPLICATION_CERT_PASSWORD | Password for Application Certificate                                       |
+| OSX_INSTALLER_CERT_BASE64     | Apple Developer Installer Certificate (base64 encoded p12)                 |
+| OSX_INSTALLER_CERT_PASSWORD   | Password for Installer Certificate                                         |
+| RMAGENT_DEB_KEY               | GPG Key ID for Signing Debian Packages                                     |
+
+To obtain Apple Developer Certificates, you must export them from the Apple Developer Portal, add them to a keychain, and export them as a `.p12` file from the "My Certificates" section of the keychain. The `.p12` file must be base64 encoded with `base64 -b 0` / `base64 -w 0` before adding it to the environment variable.
+
+To obtain the GPG keys, you must export the public and private keys with `gpg -a --export` and `gpg -a --export-secret-keys`, respectively, and base64 encode them with `base64 -b 0` / `base64 -w 0` before adding them to the environment variable.
+
+The public key should also be uploaded to the Ubuntu keyserver with `gpg --send-keys <key-id> --keyserver keyserver.ubuntu.com`.
+
+The CircleCI build process will automatically upload the agent to Cloudflare R2 as a new version. While the Debian package is automatically published as it does not support release channels, all other packages must be manually promoted to the desired release channel by running the `oclif promote` commands as described above.
+
+The build process will also update `install.sh` and the `Release.key` file in the Debian repository using the public key in the `GPG_PUBLIC_KEY` environment variable.
+
 ## Service Management
 This agent is designed to run as a service in both user and system contexts (on login and on boot) for Linux, Windows, and MacOS, using systemd, launchd, and the Windows Service Manager, respectively. The service is configured to run the agent in the background and restart it if it crashes.
 
