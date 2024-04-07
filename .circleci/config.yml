@@ -27,6 +27,10 @@ commands:
       - node/install-packages:
           pkg-manager: yarn
           override-ci-command: yarn install --frozen-lockfile
+      - attach_workspace:
+          at: .
+      - run: |
+          cat bash.env > $BASH_ENV
   install-deps:
     description: "Install Linux Dependencies"
     steps:
@@ -80,7 +84,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - bash.env
 
   pack-tarballs:
     docker:
