@@ -23,20 +23,25 @@ commands:
       - node/install:
           install-yarn: true
           node-version: '18'
-      - run: node --version
+      - run: 
+          name: Check Node Version
+          command: node --version
       - node/install-packages:
           pkg-manager: yarn
           override-ci-command: yarn install --frozen-lockfile
       - attach_workspace:
           at: .
-      - run: |
-          cat bash.env > $BASH_ENV
+      - run:
+          name: Load Workspace Variables 
+          command: cat bash.env > $BASH_ENV
   install-deps:
     description: "Install Linux Dependencies"
     steps:
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
+      - run:
+          name: Update & Install Packages
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
 
 jobs:
   prepare-release:
