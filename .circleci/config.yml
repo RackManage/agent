@@ -1,12 +1,14 @@
 version: 2.1
 
 parameters:
-  release_channel:
+  channel:
     type: string
     default: "beta"
-  release_version:
+    description: Release channel to publish to. "stable" or "beta".
+  version:
     type: string
     default: ""
+    description: Version to publish in semver format (v1.2.3). If not provided, the version from package.json will be used.
 
 orbs:
   node: circleci/node@5.0.2
@@ -31,13 +33,6 @@ commands:
       - run: |
           sudo apt-get update
           sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
-
-branch-filters: &branch-filters
-  tags:
-    only: /^v.*/
-  branches:
-    ignore:
-      - /.*/
 
 jobs:
   prepare-release:
@@ -224,28 +219,31 @@ jobs:
             echo -n "$GPG_PUBLIC_KEY" | base64 --decode > Release.key
             aws s3 cp Release.key s3://rmagent/apt/Release.key
 workflows:
-  build:
+  build_and_release:
+    when:
+      or:
+        - and:
+          - equal: [ main, << pipeline.git.branch >> ]
+          - not:
+              equal: [ "", << pipeline.git.tag >> ]
+        - and:
+            - not:
+                equal: [ "", << pipeline.parameters.version >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
     jobs:
       - prepare-release:
-          manual_release_channel: << pipeline.parameters.release_channel >>
-          manual_release_version: << pipeline.parameters.release_version >>
+          manual_release_channel: << pipeline.parameters.channel >>
+          manual_release_version: << pipeline.parameters.version >>
       - pack-tarballs:
           requires:
             - prepare-release
-          filters:
-            <<: *branch-filters
       - pack-windows:
           requires:
             - prepare-release
-          filters:
-            <<: *branch-filters
       - pack-mac:
           requires:
             - prepare-release
-          filters:
-            <<: *branch-filters
       - pack-deb:
           requires:
             - prepare-release
-          filters:
-            <<: *branch-filters
