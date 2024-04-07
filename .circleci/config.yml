@@ -88,17 +88,6 @@ jobs:
               security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
               security find-identity
       - run:
-          name: Sign Node Binaries
-          command: |
-              BINARY_PATHS=(
-                "node_modules/sqlite3/build/Release/node_sqlite3.node"
-                "node_modules/keytar/build/Release/keytar.node"
-              )
-              for BINARY_PATH in "${BINARY_PATHS[@]}"; do
-                codesign --sign "Developer ID Application: $DEVELOPER_ID_APPLICATION" --timestamp --options runtime "$BINARY_PATH"
-                codesign -dvv "$BINARY_PATH"
-              done
-      - run:
           name: Pack MacOS Installer
           command: |
             yarn oclif pack macos
@@ -173,7 +162,7 @@ workflows:
       - pack-windows:
           filters:
             <<: *branch-filters
-      - pack-mac
-          #filters:
-            #<<: *branch-filters
-      #- pack-deb
+      - pack-mac:
+          filters:
+            <<: *branch-filters
+      - pack-deb
