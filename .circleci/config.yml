@@ -188,36 +188,43 @@ jobs:
       - image: cimg/base:stable
     resource_class: medium
     steps:
-      - prep-env
-      # - install-deps
-      # - aws-cli/install
-      # - run:
-      #     name: Import GPG Key
-      #     command: |
-      #       echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
-      # - run:
-      #     name: Unlock Keychain
-      #     command: |
-      #       echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-      #       gpg-connect-agent reloadagent /bye
-      #       echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
-      # - run:
-      #     name: Pack Debian Installer
-      #     command: |
-      #       yarn oclif pack deb
-      # - run:
-      #     name: Update install.sh
-      #     command: |
-      #       aws s3 cp scripts/install.sh s3://rmagent/install.sh
-      # - run:
-      #     name: Upload Debian Installer
-      #     command: |
-      #       aws s3 cp dist/deb s3://rmagent/apt --recursive
-      # - run:
-      #     name: Upload Release Key
-      #     command: |
-      #       echo -n "$GPG_PUBLIC_KEY" | base64 --decode > Release.key
-      #       aws s3 cp Release.key s3://rmagent/apt/Release.key
+      - when:
+          condition:
+            or:
+              - not:
+                  equal:  [ "", << pipeline.git.tag >> ]
+              - equal:  [ stable, << pipeline.parameters.channel >> ]
+          steps:
+            - prep-env
+            - install-deps
+            - aws-cli/install
+            - run:
+                name: Import GPG Key
+                command: |
+                  echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+            - run:
+                name: Unlock Keychain
+                command: |
+                  echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+                  gpg-connect-agent reloadagent /bye
+                  echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+            - run:
+                name: Pack Debian Installer
+                command: |
+                  yarn oclif pack deb
+            - run:
+                name: Update install.sh
+                command: |
+                  aws s3 cp scripts/install.sh s3://rmagent/install.sh
+            - run:
+                name: Upload Debian Installer
+                command: |
+                  aws s3 cp dist/deb s3://rmagent/apt --recursive
+            - run:
+                name: Upload Release Key
+                command: |
+                  echo -n "$GPG_PUBLIC_KEY" | base64 --decode > Release.key
+                  aws s3 cp Release.key s3://rmagent/apt/Release.key
 workflows:
   build_and_release:
     when:
@@ -247,8 +254,3 @@ workflows:
       - pack-deb:
           requires:
             - prepare-release
-          when:
-            - or
-              - equal: [ stable, << pipeline.parameters.channel >> ]
-              - not:
-                  equal: [ "", << pipeline.git.tag >> ]
