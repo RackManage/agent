@@ -142,7 +142,7 @@ jobs:
       - run:
          name: Pack Debian Installer
          command: |
-           DEBUG=* yarn oclif pack deb
+           yarn oclif pack deb
       - run:
          name: Update install.sh
          command: |
