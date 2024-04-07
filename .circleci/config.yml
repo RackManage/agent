@@ -126,33 +126,33 @@ jobs:
       - image: cimg/base:stable
     resource_class: small
     steps:
-      - prep-env
-      - install-deps
-      - aws-cli/install
+      #- prep-env
+      #- install-deps
+      #- aws-cli/install
       - run:
           name: Import GPG Key
           command: |
             echo $GPG_PRIVATE_KEY_BASE64 | base64 --decode | gpg --batch --import
             gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
-      - run:
-          name: Unlock Keychain
-          command: |
-            echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-            gpg-connect-agent reloadagent /bye
-            echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+      #- run:
+      #    name: Unlock Keychain
+      #    command: |
+      #      echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+      #      gpg-connect-agent reloadagent /bye
+      #      echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
             
-      - run:
-          name: Pack Debian Installer
-          command: |
-            yarn oclif pack deb
-      - run:
-          name: Update install.sh
-          command: |
-            aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
-      - run:
-          name: Upload Debian Installer
-          command: |
-            aws s3 cp dist/deb s3://rmagent/apt --recursive
+      #- run:
+      #    name: Pack Debian Installer
+      #    command: |
+      #      yarn oclif pack deb
+      #- run:
+      #    name: Update install.sh
+      #    command: |
+      #      aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
+      #- run:
+      #    name: Upload Debian Installer
+      #    command: |
+      #      aws s3 cp dist/deb s3://rmagent/apt --recursive
 workflows:
   build:
     jobs:
