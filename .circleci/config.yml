@@ -151,6 +151,11 @@ jobs:
          name: Upload Debian Installer
          command: |
            aws s3 cp dist/deb s3://rmagent/apt --recursive
+      - run:
+          name: Upload Release Key
+          command: |
+            echo -n "$GPG_PUBLIC_KEY" | base64 --decode > Release.key
+            aws s3 cp Release.key s3://rmagent/apt/Release.key
 workflows:
   build:
     jobs:
