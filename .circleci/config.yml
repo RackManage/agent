@@ -134,8 +134,8 @@ jobs:
           command: |
             echo -n "$GPG_PRIVATE_KEY" | base64 --decode > signing-key.gpg
             # gpg -v --import signing-key.gpg
-            gpg -v --batch --import <(echo -n "$GPG_PRIVATE_KEY" | base64 --decode)
-            #echo "$GPG_PASSPHRASE" | gpg -v --batch --yes --passphrase-fd 0 signing-key.gpg
+            gpg -vv --debug-level 4 --batch --import <(echo -n "$GPG_PRIVATE_KEY" | base64 --decode)
+            #echo "$GPG_PASSPHRASE" | gpg -vv --debug-level 4 --batch --yes --passphrase-fd 0 signing-key.gpg
             gpg --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
       #- run:
       #    name: Unlock Keychain
