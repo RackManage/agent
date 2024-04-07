@@ -5,10 +5,6 @@ parameters:
     type: string
     default: "beta"
     description: Release channel to publish to. "stable" or "beta".
-  version:
-    type: string
-    default: ""
-    description: Version to publish in semver format (v1.2.3). If not provided, the version from package.json will be used.
 
 orbs:
   node: circleci/node@5.0.2
@@ -61,20 +57,16 @@ jobs:
           command: |
             # Determine if a tag is present and set channel/version accordingly
             CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || true)
+            RELEASE_VERSION=$(jq -r .version package.json)
             if [ -n "$CURRENT_TAG" ]; then
               RELEASE_CHANNEL="stable"
-              RELEASE_VERSION="${CURRENT_TAG}"
             else
               RELEASE_CHANNEL="beta"
-              RELEASE_VERSION=$(jq -r .version package.json)
             fi
 
             # Apply manual overrides if specified
             if [ -n "<< parameters.manual_release_channel >>" ]; then
               RELEASE_CHANNEL="<< parameters.manual_release_channel >>"
-            fi
-            if [ -n "<< parameters.manual_release_version >>" ]; then
-              RELEASE_VERSION="<< parameters.manual_release_version >>"
             fi
 
             # Export for use in subsequent steps
@@ -93,7 +85,7 @@ jobs:
           paths:
             - bash.env
 
-  pack-tarballs:
+  pack-windows:
     docker:
       - image: cimg/base:stable
     resource_class: medium
@@ -101,25 +93,13 @@ jobs:
       - prep-env
       - install-deps
       - run:
-          name: Pack tarballs
+          name: Pack Windows Tarballs
           command: |
-            yarn oclif pack tarballs
+            yarn oclif pack tarballs --targets win32-x64,win32-x86 --parallel --xz
       - run:
-          name: Upload Tarballs
+          name: Upload Windows Tarballs
           command: |
-            yarn oclif upload tarballs
-      - run: 
-          name: Promote Release
-          command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz
-
-  pack-windows:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    steps:
-      - prep-env
-      - install-deps
+            yarn oclif upload tarballs --targets win32-x64,win32-x86 --xz
       - run:
           name: Pack Windows Installer
           command: |
@@ -129,15 +109,23 @@ jobs:
           command: |
             yarn oclif upload win
       - run: 
-          name: Promote Release
+          name: Promote Windows Release
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz -w
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win-x64,win-x86
 
   pack-mac:
     macos:
       xcode: 15.2.0
     steps:
       - prep-env
+      - run:
+          name: Pack MacOS Tarballs
+          command: |
+            yarn oclif pack tarballs --targets darwin-x64,darwin-arm64 --parallel --xz
+      - run:
+          name: Upload MacOS Tarballs
+          command: |
+            yarn oclif upload tarballs --targets darwin-x64,darwin-arm64 --xz
       - run:
           name: Install Certs
           command: |
@@ -190,32 +178,47 @@ jobs:
           command: |
             yarn oclif upload macos
       - run: 
-          name: Promote Release
+          name: Promote MacOS Release
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz -m
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets darwin-x64,darwin-arm64
 
-  pack-deb:
+  pack-linux:
     docker:
       - image: cimg/base:stable
     resource_class: medium
     steps:
+      - prep-env
+      - install-deps
+      - run:
+          name: Pack Linux Tarballs
+          command: |
+            yarn oclif pack tarballs --targets linux-x64,linux-arm64,linux-arm  --parallel --xz
+      - run:
+          name: Upload Linux Tarballs
+          command: |
+            yarn oclif upload tarballs --targets linux-x64,linux-arm64,linux-arm --xz
+      - run: 
+          name: Promote Linux Tarball Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets linux-x64,linux-arm64,linux-arm
       - when:
           condition:
             and:
               - not:
-                  equal:  [ stable, << pipeline.parameters.channel >> ]
-              - equal:  [ "", << pipeline.git.tag >> ]
+                  equal: [ stable, << pipeline.parameters.channel >> ]
+              - equal: [ "", << pipeline.git.tag >> ]
           steps:
-            - run: echo "Skipping Debian Release"
+            - run: 
+                name: Check Debian Package Creation
+                command: |
+                  echo "Channel is not stable and no tag is present. Skipping Debian package creation."
       - when:
           condition:
             or:
               - not:
-                  equal:  [ "", << pipeline.git.tag >> ]
-              - equal:  [ stable, << pipeline.parameters.channel >> ]
+                  equal: [ "", << pipeline.git.tag >> ]
+              - equal: [ stable, << pipeline.parameters.channel >> ]
           steps:
-            - prep-env
-            - install-deps
             - aws-cli/install
             - run:
                 name: Import GPG Key
@@ -252,24 +255,17 @@ workflows:
           - equal: [ main, << pipeline.git.branch >> ]
           - not:
               equal: [ "", << pipeline.git.tag >> ]
-        - and:
-            - not:
-                equal: [ "", << pipeline.parameters.version >> ]
-            - not:
-                equal: [ "", << pipeline.parameters.channel >> ]
+        - not:
+            equal: [ "", << pipeline.parameters.channel >> ]
     jobs:
       - prepare-release:
           manual_release_channel: << pipeline.parameters.channel >>
-          manual_release_version: << pipeline.parameters.version >>
-      - pack-tarballs:
-          requires:
-            - prepare-release
       - pack-windows:
           requires:
             - prepare-release
       - pack-mac:
           requires:
             - prepare-release
-      - pack-deb:
+      - pack-linux:
           requires:
             - prepare-release
