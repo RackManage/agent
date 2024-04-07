@@ -1,5 +1,13 @@
 version: 2.1
 
+parameters:
+  release_channel:
+    type: string
+    default: "beta"
+  release_version:
+    type: string
+    default: ""
+
 orbs:
   node: circleci/node@5.0.2
   gh: circleci/github-cli@2.0
@@ -32,6 +40,44 @@ branch-filters: &branch-filters
       - /.*/
 
 jobs:
+  prepare-release:
+    steps:
+      - checkout
+      - run:
+          name: Determine Tag, Commit SHA, and Prepare Release Info
+          command: |
+            # Determine if a tag is present and set channel/version accordingly
+            CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || true)
+            if [ -n "$CURRENT_TAG" ]; then
+              RELEASE_CHANNEL="stable"
+              RELEASE_VERSION="${CURRENT_TAG}"
+            else
+              RELEASE_CHANNEL="beta"
+              RELEASE_VERSION=$(jq -r .version package.json)
+            fi
+
+            # Apply manual overrides if specified
+            if [ -n "<< parameters.manual_release_channel >>" ]; then
+              RELEASE_CHANNEL="<< parameters.manual_release_channel >>"
+            fi
+            if [ -n "<< parameters.manual_release_version >>" ]; then
+              RELEASE_VERSION="<< parameters.manual_release_version >>"
+            fi
+
+            # Export for use in subsequent steps
+            echo "export RELEASE_CHANNEL=${RELEASE_CHANNEL}" >> $BASH_ENV
+            echo "export RELEASE_VERSION=${RELEASE_VERSION}" >> $BASH_ENV
+            echo "export COMMIT_SHA=$(git rev-parse --short HEAD)" >> $BASH_ENV
+            source $BASH_ENV
+
+            echo "Configured Release Channel: $RELEASE_CHANNEL"
+            echo "Configured Release Version: $RELEASE_VERSION"
+            echo "Commit SHA: $COMMIT_SHA"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
   pack-tarballs:
     docker:
       - image: cimg/base:stable
@@ -47,6 +93,10 @@ jobs:
           name: Upload Tarballs
           command: |
             yarn oclif upload tarballs
+      - run: 
+          name: Promote Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz
 
   pack-windows:
     docker:
@@ -63,6 +113,10 @@ jobs:
           name: Upload Windows Installer
           command: |
             yarn oclif upload win
+      - run: 
+          name: Promote Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz -w
 
   pack-mac:
     macos:
@@ -120,6 +174,10 @@ jobs:
           name: Upload MacOS Installer
           command: |
             yarn oclif upload macos
+      - run: 
+          name: Promote Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz -m
 
   pack-deb:
     docker:
@@ -134,23 +192,23 @@ jobs:
           command: |
             echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
       - run:
-         name: Unlock Keychain
-         command: |
-           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-           gpg-connect-agent reloadagent /bye
-           echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+          name: Unlock Keychain
+          command: |
+            echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+            gpg-connect-agent reloadagent /bye
+            echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
       - run:
-         name: Pack Debian Installer
-         command: |
-           yarn oclif pack deb
+          name: Pack Debian Installer
+          command: |
+            yarn oclif pack deb
       - run:
-         name: Update install.sh
-         command: |
-           aws s3 cp scripts/install.sh s3://rmagent/install.sh
+          name: Update install.sh
+          command: |
+            aws s3 cp scripts/install.sh s3://rmagent/install.sh
       - run:
-         name: Upload Debian Installer
-         command: |
-           aws s3 cp dist/deb s3://rmagent/apt --recursive
+          name: Upload Debian Installer
+          command: |
+            aws s3 cp dist/deb s3://rmagent/apt --recursive
       - run:
           name: Upload Release Key
           command: |
@@ -159,15 +217,24 @@ jobs:
 workflows:
   build:
     jobs:
+      - prepare-release
       - pack-tarballs:
+          requires:
+            - prepare-release
           filters:
             <<: *branch-filters
       - pack-windows:
+          requires:
+            - prepare-release
           filters:
             <<: *branch-filters
       - pack-mac:
+          requires:
+            - prepare-release
           filters:
             <<: *branch-filters
       - pack-deb:
+          requires:
+            - prepare-release
           filters:
             <<: *branch-filters
