@@ -22,7 +22,7 @@ commands:
     steps:
       - run: |
           sudo apt-get update
-          sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev ca-certificates
+          sudo apt-get install -y apt-utils nsis p7zip-full libsecret-1-dev
 
 branch-filters: &branch-filters
   tags:
@@ -126,36 +126,36 @@ jobs:
       - image: cimg/base:stable
     resource_class: small
     steps:
-      # - prep-env
-      # - install-deps
-      # - aws-cli/install
+      - prep-env
+      - install-deps
+      - aws-cli/install
+      # - run:
+      #     name: Import GPG Key
+      #     command: |
+      #       echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+      # - run:
+      #    name: Unlock Keychain
+      #    command: |
+      #      echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+      #      gpg-connect-agent reloadagent /bye
+      #      echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
+      # - run: 
+      #     name: Test Signing
+      #     command: |
+      #       echo "test" > test.txt
+      #       gpg --batch --yes --pinentry-mode loopback -u "carter@rackmanage.io" --sign test.txt
       - run:
-          name: Import GPG Key
-          command: |
-            echo -n "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
-      - run:
-         name: Unlock Keychain
+         name: Pack Debian Installer
          command: |
-           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
-           gpg-connect-agent reloadagent /bye
-           echo "$GPG_PASSPHRASE" | gpg -vv --batch --pinentry-mode loopback --passphrase-fd 0 --output /dev/null --sign
-      - run: 
-          name: Test Signing
-          command: |
-            echo "test" > test.txt
-            gpg --batch --yes --pinentry-mode loopback -u "carter@rackmanage.io" --sign test.txt
-      # - run:
-      #    name: Pack Debian Installer
-      #    command: |
-      #      yarn oclif pack deb
-      # - run:
-      #    name: Update install.sh
-      #    command: |
-      #      aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
-      # - run:
-      #    name: Upload Debian Installer
-      #    command: |
-      #      aws s3 cp dist/deb s3://rmagent/apt --recursive
+           yarn oclif pack deb
+      - run:
+         name: Update install.sh
+         command: |
+           aws s3 cp src/scripts/install.sh s3://rmagent/install.sh
+      - run:
+         name: Upload Debian Installer
+         command: |
+           aws s3 cp dist/deb s3://rmagent/apt --recursive
 workflows:
   build:
     jobs:
