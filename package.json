@@ -1,6 +1,6 @@
 {
   "name": "rmagent",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Rack Manage CLI agent for monitoring and interacting with on-premises equipment",
   "homepage": "https://github.com/RackManage/agent",
   "bugs": "https://github.com/RackManage/agent/issues",
