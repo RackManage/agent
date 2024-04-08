@@ -80,9 +80,21 @@ async function pingServer(server: any) {
   });
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 async function startMonitoring() {
   const db = await openOrCreateDatabase();
-  const servers: any = await getServers(db);
+  let servers: any = await getServers(db);
+
+  while (servers && servers.length === 0) {
+    console.log("No servers found. Sleeping for 5 minutes...");
+    await sleep(1000 * 5 * 60);
+    servers = await getServers(db);
+  }
 
   for (const server of servers) {
     pingServer(server);

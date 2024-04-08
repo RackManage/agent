@@ -20,18 +20,19 @@ import {
   userServicePath,
 } from "./index"
 
+// TO-DO: Fix false-positive stderr on linux
 async function sequentialCommands(commands: { command: string, ignoreErrors: boolean }[]) {
   for (const command of commands) {
     try {
       // eslint-disable-next-line no-await-in-loop
       const { stderr } = await execPromise(command.command);
       if (stderr && !command.ignoreErrors) {
-        console.error(`Error executing command: ${command}`);
+        console.error(`Error executing command: ${command.command}`);
         console.error(stderr);
       }
     } catch (error) {
       if (!command.ignoreErrors) {
-        console.error(`Failed to execute command: ${command}`);
+        console.error(`Failed to execute command: ${command.command}`);
         console.error(error);
       }
     }

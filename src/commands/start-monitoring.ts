@@ -20,7 +20,7 @@ export default class StartMonitoring extends Command {
     const db = await openOrCreateDatabase((flags && flags.path) || undefined);
     if (!(await checkAndRefreshToken(db))) return;
 
-    startMonitoring();
+    await startMonitoring();
   
     await closeDb(db, (flags && flags.path) || undefined);
   }
