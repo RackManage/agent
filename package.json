@@ -1,5 +1,5 @@
 {
-  "name": "agent",
+  "name": "rmagent",
   "version": "0.0.1",
   "description": "Rack Manage CLI agent for monitoring and interacting with on-premises equipment",
   "homepage": "https://github.com/RackManage/agent",
@@ -32,7 +32,7 @@
   "oclif": {
     "bin": "rmagent",
     "commands": "./dist/commands",
-    "dirname": "rmagent",
+    "dirname": "RackManage",
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-update",
@@ -59,7 +59,8 @@
       "sign": "\"Developer ID Installer: Carter Roeser (87D84YS9QF)\""
     },
     "windows": {
-      "name": "Rack Manage Agent"
+      "name": "Rack Manage Agent",
+      "homepage": "https://rackmanage.io"
     },
     "update": {
       "s3": {
@@ -92,7 +93,7 @@
     "ping-monitor": "^0.8.2",
     "promptly": "^3.2.0",
     "sqlite3": "^5.1.7",
-    "winreg": "^1.2.5"
+    "winreg": "1.2.4"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",

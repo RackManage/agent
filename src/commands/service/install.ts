@@ -48,6 +48,6 @@ export default class Install extends Command {
 
     console.log("");
 
-    await manageService("install", trigger);
+    await manageService("install", this.config.root, trigger);
   }
 }

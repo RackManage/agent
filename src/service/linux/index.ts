@@ -6,7 +6,7 @@ import {
   uninstall,
 } from "../helpers/unix"
 
-async function installService(mode: string) {
+async function installService(root: string, mode: string) {
   try {
     (mode === "login") ?
       await install(
@@ -35,7 +35,7 @@ async function installService(mode: string) {
   }
 }
 
-async function uninstallService() {
+async function uninstallService(root: string) {
   try {
     await uninstall(
       "rmagent.service",
@@ -55,7 +55,7 @@ async function uninstallService() {
   }
 }
 
-async function startService() {
+async function startService(root: string) {
   try {
     await runCommands(
       ["systemctl --user start rmagent.service"],
@@ -68,7 +68,7 @@ async function startService() {
   }
 }
 
-async function stopService() {
+async function stopService(root: string) {
   try {
     await runCommands(
       ["systemctl --user stop rmagent.service"],

@@ -16,6 +16,6 @@ export default class Start extends Command {
     if (!(await checkAndRefreshToken(db))) return;
     await closeDb(db);
 
-    await manageService("start");
+    await manageService("start", this.config.root);
   }
 }

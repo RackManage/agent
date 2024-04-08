@@ -39,21 +39,37 @@ For other issues, [submit a support ticket](https://support.rackmanage.io/).
 * [`rmagent version`](docs/version.md)
 
 <!-- commandsstop -->
+# Command Topics
+
+* [`rmagent help`](docs/help.md) - Display help for rmagent.
+* [`rmagent ipmi`](docs/ipmi.md) - Manage IPMI settings for servers
+* [`rmagent login`](docs/login.md) - Connect agent to Rack Manage account
+* [`rmagent logout`](docs/logout.md) - Disconnect agent from Rack Manage account
+* [`rmagent server`](docs/server.md) - Manage servers monitored by the agent
+* [`rmagent service`](docs/service.md) - Manage the agent background service
+* [`rmagent status`](docs/status.md) - Check the status of the agent
+* [`rmagent update`](docs/update.md) - update the rmagent CLI
+* [`rmagent version`](docs/version.md)
+
+<!-- commandsstop -->
 
 Developing
 ==========
 
 ## Development Requirements
-- Node.js 20
-- oclif
+- Node.js 20+
 - Yarn
+- libsecret dev (for Linux development)
+- .NET Framework 4.5 (for Windows development)
+- p7zip / 7-Zip (for building Windows installers)
+- nsis (for building Windows installers)
+- apt-utils (for building Debian packages)
 
 ## Getting Started
 
 To get started with development, clone the repository and run the following commands:
 
 ```bash
-yarn global add oclif
 yarn install
 ```
 

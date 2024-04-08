@@ -10,7 +10,7 @@ const platformModules:  Record<string, any> = {
   win32: windowsModule,
 };
 
-async function manageService(command: string, option: any = null) {
+async function manageService(command: string, root: string, option: any = null) {
   const modulePath = platformModules[os.platform()]
 
   if (!modulePath) {
@@ -43,7 +43,7 @@ async function manageService(command: string, option: any = null) {
     return;
   }
 
-  return serviceCommand(option);
+  return serviceCommand(root, option);
 }
 
 export { manageService };

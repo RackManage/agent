@@ -16,6 +16,6 @@ export default class Uninstall extends Command {
     if (!(await checkAndRefreshToken(db))) return;
     await closeDb(db);
 
-    await manageService("uninstall");
+    await manageService("uninstall", this.config.root);
   }
 }

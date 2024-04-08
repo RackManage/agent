@@ -2,7 +2,8 @@
   <id>rmagent</id>
   <name>Rack Manage Agent</name>
   <description>Rack Manage agent for monitoring and interacting with on-premises equipment</description>
-  <executable>C:\ProgramData\RackManage\rmagent.exe</executable>
+  <executable>{{EXE_PATH}}</executable>
+  <workingdirectory>{{DATA_PATH}}</workingdirectory>
   <logpath>C:\ProgramData\RackManage\logs</logpath>
   <arguments>start-monitoring</arguments>
 </service>

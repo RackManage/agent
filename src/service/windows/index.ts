@@ -15,8 +15,19 @@ import {
   serviceInstalled,
 } from "../helpers"
 
-async function installService(mode: string) {
+async function installService(root: string, mode: string) {
   const {  systemPath, userPath } = dataPath();
+
+  let targetProcess = null;
+
+  if (fs.existsSync(path.join(root, "bin", "rmagent.cmd"))) {
+    targetProcess = path.join(root, "bin", "rmagent.cmd");
+  } else if (fs.existsSync(path.join(root, "bin", "run.cmd"))) {
+    targetProcess = path.join(root, "bin", "run.cmd");
+  } else {
+    console.error("Unable to find service executable");
+    return;
+  }
 
   try {
     if (mode === "login") {
@@ -41,15 +52,7 @@ async function installService(mode: string) {
         return;
       }
 
-      // Create the user data directory if it doesn't exist
-      if (!fs.existsSync(userPath)) {
-        fs.mkdirSync(userPath, { recursive: true });
-      }
-
-      // Copy the current executable to the user data directory
-      fs.copyFileSync(process.argv[0], path.join(userPath, "rmagent.exe"));
-
-      const regValue = `"${path.join(userPath, "rmagent.exe")}" start-monitoring --path "${findDatabasePath()}"`;
+      const regValue = `"${targetProcess}" start-monitoring --path "${findDatabasePath()}"`;
 
       // Add the service to the registry
       regKey.set("RackManage", Registry.REG_SZ, regValue, (err: any) => {
@@ -75,14 +78,16 @@ async function installService(mode: string) {
         fs.mkdirSync(systemPath, { recursive: true });
       }
 
-      // Copy the current executable to the system data directory
-      fs.copyFileSync(process.argv[0], path.join(systemPath, "rmagent.exe"));
-
       // Copy the service wrapper to the system data directory
       fs.copyFileSync(path.join(__dirname, "rmservice.exe"), path.join(systemPath, "rmservice.exe"));
 
-      // Copy the service configuration file to the system data directory
-      fs.copyFileSync(path.join(__dirname, "rmservice.xml"), path.join(systemPath, "rmservice.xml"));
+      // Replace the placeholder with the actual path
+      let serviceData = fs.readFileSync(path.join(__dirname, "rmservice.xml.tpl"));
+      serviceData = serviceData
+        .toString()
+        .replaceAll("{{EXE_PATH}}", targetProcess)
+        .replaceAll("{{DATA_PATH}}", root);
+      fs.writeFileSync(path.join(systemPath, "rmservice.xml"), serviceData);
 
       // Call rmservice.exe install to install the service
       const { stderr } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" install`);
@@ -101,7 +106,7 @@ async function installService(mode: string) {
   }
 }
 
-async function uninstallService() {
+async function uninstallService(root: string) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
@@ -129,11 +134,6 @@ async function uninstallService() {
         }
       });
 
-      // Remove the executable from the user data directory
-      if (fs.existsSync(path.join(userPath, "rmagent.exe"))) {
-        fs.unlinkSync(path.join(userPath, "rmagent.exe"));
-      }
-
       console.log("Service uninstalled");
     } else {
       if (!fs.existsSync(path.join(systemPath, "rmservice.exe"))) {
@@ -149,22 +149,16 @@ async function uninstallService() {
         return;
       }
 
-      if (stdout.includes("NonExistent")) {
+      if (!stdout.includes("NonExistent")) {
+        // Call rmservice.exe uninstall to uninstall the service
+        const { stderr: stderr2 } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" uninstall`);
+
+        if (stderr2) {
+          console.error(stderr2);
+          return;
+        }
+      } else {
         console.log("Service not installed");
-        return;
-      }
-
-      // Call rmservice.exe uninstall to uninstall the service
-      const { stderr: stderr2 } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" uninstall`);
-
-      if (stderr2) {
-        console.error(stderr2);
-        return;
-      }
-
-      // Remove the executable from the system data directory
-      if (fs.existsSync(path.join(systemPath, "rmagent.exe"))) {
-        fs.unlinkSync(path.join(systemPath, "rmagent.exe"));
       }
 
       // Remove the service wrapper from the system data directory
@@ -186,7 +180,7 @@ async function uninstallService() {
   }
 }
 
-async function startService() {
+async function startService(root: string) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
@@ -232,7 +226,7 @@ async function startService() {
   }
 }
 
-async function stopService() {
+async function stopService(root: string) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;

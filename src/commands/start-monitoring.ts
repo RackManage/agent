@@ -2,6 +2,7 @@ import {Command, Flags} from '@oclif/core'
 
 import { closeDb, openOrCreateDatabase } from '../db'
 import { checkAndRefreshToken } from '../firebase/auth'
+import { startMonitoring } from '../monitor'
 
 export default class StartMonitoring extends Command {
   static examples = [
@@ -18,8 +19,7 @@ export default class StartMonitoring extends Command {
     const {flags} = await this.parse(StartMonitoring)
     const db = await openOrCreateDatabase((flags && flags.path) || undefined);
     if (!(await checkAndRefreshToken(db))) return;
-  
-    const { startMonitoring } = require("../monitor/index.ts");
+
     startMonitoring();
   
     await closeDb(db, (flags && flags.path) || undefined);

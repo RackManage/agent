@@ -16,6 +16,6 @@ export default class Stop extends Command {
     if (!(await checkAndRefreshToken(db))) return;
     await closeDb(db);
 
-    await manageService("stop");
+    await manageService("stop", this.config.root);
   }
 }
