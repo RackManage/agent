@@ -1,6 +1,10 @@
 # Rack Manage Agent
 
-The Rack Manage Agent is used to monitor server uptime and send commands to servers via IPMI.
+[![Build](https://img.shields.io/circleci/build/github/RackManage/agent?style=for-the-badge)](https://app.circleci.com/pipelines/github/RackManage/agent?branch=main)
+![License](https://img.shields.io/github/license/RackManage/agent?style=for-the-badge)
+![Version](https://img.shields.io/github/package-json/v/RackManage/agent?style=for-the-badge)
+
+The Rack Manage Agent is a CLI service used to monitor server uptime and send commands to servers via IPMI.
 
 For more about Rack Manage see [rackmanage.io](https://rackmanage.io/).
 
@@ -185,7 +189,7 @@ aws s3 cp Release.key s3://rmagent/apt/Release.key
 
 ## Automated Builds
 
-The agent is build and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing to the `main` branch with a tagged commit.
+The agent is built and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing to the `main` branch. Commits with a tag will push the agent to the `stable` release channel, while commits without a tag will push the agent to the `beta` release channel. The apt repository does not support release channels and will only be updated with a stable release.
 
 Manual builds can be triggered in CircleCI by running `Trigger Pipeline` on the `main` branch with the `channel` parameter set to the desired release channel (`stable` or `beta`).
 
