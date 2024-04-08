@@ -16,7 +16,9 @@ The Rack Manage Agent (`rmagent`) is a Node-based CLI that runs on an on-premise
 
 # Installation
 
-To install the agent, please see the [installation instructions](https://support.rackmanage.io/space/RMS/45154308/Installing+(and+managing)+the+Agent) from the Rack Manage Support Knowledgebase.
+Visit the Rack Manage support site for installation instructions and download links.
+
+[![Install Button](https://img.shields.io/badge/Install_rmagent-11B981?style=for-the-badge)](https://support.rackmanage.io/space/RMS/45154308/Installing+(and+managing)+the+Agent)
 
 # Issues
 
