@@ -18,7 +18,7 @@ USAGE
 
 FLAGS
   -f, --force            Force the installation without confirmation
-  -t, --trigger=<value>  When to trigger the service (login, boot). Admin permissions required for boot trigger.
+  -t, --trigger=<value>  When to trigger the service (login, boot). Sudo permissions required for boot trigger.
 
 DESCRIPTION
   Installs the agent service

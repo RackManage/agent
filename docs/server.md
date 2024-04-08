@@ -12,8 +12,8 @@ Add a server
 
 ```
 USAGE
-  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u <value>] [-m
-    <value>] [-n <value>] [-p <value>] [-s <value>]
+  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u
+    <value>] [-m <value>] [-n <value>] [-p <value>] [-s <value>]
 
 FLAGS
   -P, --ipmiPassword=<value>  IPMI password
