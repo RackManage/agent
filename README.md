@@ -194,7 +194,8 @@ aws s3 cp Release.key s3://rmagent/apt/Release.key
 
 ## Automated Builds
 
-![CircleCI](https://dl.circleci.com/insights-snapshot/gh/RackManage/agent/main/build_and_release/badge.svg?window=24h)
+[![CircleCI](https://dl.circleci.com/insights-snapshot/gh/RackManage/agent/main/build_and_release/badge.svg?window=24h)](https://app.circleci.com/insights/github/RackManage/agent?branches=main&workflows=build_and_release&reporting-window=last-24-hours&insights-snapshot=true)
+
 
 The agent is built and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing tags to the repository. Pushing tags will trigger builds to the `stable` release channel.
 
