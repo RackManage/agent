@@ -22,7 +22,7 @@ EXAMPLES
   $ rmagent ipmi list
 ```
 
-_See code: [src/commands/ipmi/list.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/ipmi/list.ts)_
+_See code: [src/commands/ipmi/list.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/list.ts)_
 
 ## `rmagent ipmi set`
 
@@ -30,7 +30,8 @@ Set IPMI account for a server
 
 ```
 USAGE
-  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u <value>]
+  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u
+    <value>]
 
 FLAGS
   -a, --address=<value>   IPMI address
@@ -47,7 +48,7 @@ EXAMPLES
   $ rmagent ipmi set
 ```
 
-_See code: [src/commands/ipmi/set.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/ipmi/set.ts)_
+_See code: [src/commands/ipmi/set.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/set.ts)_
 
 ## `rmagent ipmi test`
 
@@ -67,4 +68,4 @@ EXAMPLES
   $ rmagent ipmi test
 ```
 
-_See code: [src/commands/ipmi/test.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/ipmi/test.ts)_
+_See code: [src/commands/ipmi/test.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/test.ts)_

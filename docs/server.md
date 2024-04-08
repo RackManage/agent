@@ -12,8 +12,8 @@ Add a server
 
 ```
 USAGE
-  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u <value>] [-m
-    <value>] [-n <value>] [-p <value>] [-s <value>]
+  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u
+    <value>] [-m <value>] [-n <value>] [-p <value>] [-s <value>]
 
 FLAGS
   -P, --ipmiPassword=<value>  IPMI password
@@ -34,7 +34,7 @@ EXAMPLES
   $ rmagent server add
 ```
 
-_See code: [src/commands/server/add.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/server/add.ts)_
+_See code: [src/commands/server/add.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/server/add.ts)_
 
 ## `rmagent server list`
 
@@ -51,4 +51,4 @@ EXAMPLES
   $ rmagent server list
 ```
 
-_See code: [src/commands/server/list.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/server/list.ts)_
+_See code: [src/commands/server/list.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/server/list.ts)_

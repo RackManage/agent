@@ -20,4 +20,4 @@ EXAMPLES
   $ rmagent logout
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/logout.ts)_

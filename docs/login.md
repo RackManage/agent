@@ -23,4 +23,4 @@ EXAMPLES
   $ rmagent login
 ```
 
-_See code: [src/commands/login.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/login.ts)_

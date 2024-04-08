@@ -202,6 +202,12 @@ Beta releases are not run automatically due to the cost of MacOS builds. To run 
 
 Version numbers are pulled from the `package.json` file and are used to publish to Cloudflare R2 / the CLI `update` command. Git version tags are ignored in the build process and are for reference only.
 
+Documentation should also be updated with each release to reflect changes in the agent. This can be done by running the following command:
+
+```bash
+yarn run version
+```
+
 The build process relies on the following environment variables:
 
 | Variable                      | Value                                                                      |

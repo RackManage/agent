@@ -20,4 +20,4 @@ EXAMPLES
   $ rmagent status
 ```
 
-_See code: [src/commands/status.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/status.ts)_
+_See code: [src/commands/status.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/status.ts)_

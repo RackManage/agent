@@ -27,7 +27,7 @@ EXAMPLES
   $ rmagent service install
 ```
 
-_See code: [src/commands/service/install.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/service/install.ts)_
+_See code: [src/commands/service/install.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/install.ts)_
 
 ## `rmagent service start`
 
@@ -44,7 +44,7 @@ EXAMPLES
   $ rmagent service start
 ```
 
-_See code: [src/commands/service/start.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/service/start.ts)_
+_See code: [src/commands/service/start.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/start.ts)_
 
 ## `rmagent service stop`
 
@@ -61,7 +61,7 @@ EXAMPLES
   $ rmagent service stop
 ```
 
-_See code: [src/commands/service/stop.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/service/stop.ts)_
+_See code: [src/commands/service/stop.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/stop.ts)_
 
 ## `rmagent service uninstall`
 
@@ -78,4 +78,4 @@ EXAMPLES
   $ rmagent service uninstall
 ```
 
-_See code: [src/commands/service/uninstall.ts](https://github.com/RackManage/agent/blob/v0.0.1/src/commands/service/uninstall.ts)_
+_See code: [src/commands/service/uninstall.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/uninstall.ts)_
