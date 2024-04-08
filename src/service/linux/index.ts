@@ -9,45 +9,83 @@ import {
 async function installService(root: string, mode: string) {
   try {
     (mode === "login") ?
-      await install(
-        path.join(__dirname, "rmagent-user.service.tpl"),
-        "rmagent.service",
-        [
-          "systemctl --user daemon-reload",
-          "systemctl --user enable rmagent.service",
-          "systemctl --user start rmagent.service"
+      await install({
+        loadCommands: [
+          {
+            command: `systemctl --user daemon-reload`,
+            ignoreErrors: true,
+          },
+          {
+            command: `systemctl --user enable rmagent.service`,
+            ignoreErrors: false,
+          },
+          {
+            command: `systemctl --user start rmagent.service`,
+            ignoreErrors: false,
+          }
         ],
-        mode
-      )
+        mode,
+        root,
+        serviceFileName: "rmagent.service",
+        serviceTemplate: path.join(__dirname, "rmagent-user.service.tpl"),
+      })
     :
-      await install(
-        path.join(__dirname, "rmagent-system.service.tpl"),
-        "rmagent.service",
-        [
-          "sudo systemctl daemon-reload",
-          "sudo systemctl enable rmagent.service",
-          "sudo systemctl start rmagent.service"
+      await install({
+        loadCommands: [
+          {
+            command: `sudo systemctl daemon-reload`,
+            ignoreErrors: true,
+          },
+          {
+            command: `sudo systemctl enable rmagent.service`,
+            ignoreErrors: false,
+          },
+          {
+            command: `sudo systemctl start rmagent.service`,
+            ignoreErrors: false,
+          }
         ],
-        mode
-      )
+        mode,
+        root,
+        serviceFileName: "rmagent.service",
+        serviceTemplate: path.join(__dirname, "rmagent-system.service.tpl"),
+      });
   } catch (error: any) {
     console.error(error);
   }
 }
 
-async function uninstallService(root: string) {
+async function uninstallService() {
   try {
     await uninstall(
       "rmagent.service",
       [
-        "systemctl --user stop rmagent.service || true",
-        "systemctl --user disable rmagent.service",
-        "systemctl --user daemon-reload"
+        {
+          command: `systemctl --user stop rmagent.service`,
+          ignoreErrors: true,
+        },
+        {
+          command: `systemctl --user disable rmagent.service`,
+          ignoreErrors: false,
+        },
+        {
+          command: `systemctl --user daemon-reload`,
+          ignoreErrors: false,
+        }
       ],
       [
-        "sudo systemctl stop rmagent.service || true",
-        "sudo systemctl disable rmagent.service",
-        "sudo systemctl daemon-reload"
+        {
+          command: `sudo systemctl stop rmagent.service`,
+          ignoreErrors: true,
+        },
+        {
+          command: `sudo systemctl disable rmagent.service`,
+          ignoreErrors: false,
+        },
+        {
+          command: `sudo systemctl daemon-reload`,
+          ignoreErrors: false,
+        }
       ], 
     )
   } catch (error: any) {
@@ -55,11 +93,17 @@ async function uninstallService(root: string) {
   }
 }
 
-async function startService(root: string) {
+async function startService() {
   try {
     await runCommands(
-      ["systemctl --user start rmagent.service"],
-      ["sudo systemctl start rmagent.service"]
+      [{
+        command: "systemctl --user start rmagent.service",
+        ignoreErrors: false,
+      }],
+      [{
+        command: "sudo systemctl start rmagent.service",
+        ignoreErrors: false,
+      }]
     )
     
     console.log("Service started successfully");
@@ -68,11 +112,17 @@ async function startService(root: string) {
   }
 }
 
-async function stopService(root: string) {
+async function stopService() {
   try {
     await runCommands(
-      ["systemctl --user stop rmagent.service"],
-      ["sudo systemctl stop rmagent.service"]
+      [{
+        command: "systemctl --user stop rmagent.service",
+        ignoreErrors: false,
+      }],
+      [{
+        command: "sudo systemctl stop rmagent.service",
+        ignoreErrors: false,
+      }]
     )
 
     console.log("Service stopped successfully");

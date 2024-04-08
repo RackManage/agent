@@ -13,41 +13,67 @@ import {
 async function installService(root: string, mode: string) {
   try {
     (mode === "login") ?
-      await install(
-          path.join(__dirname, "io.rackmanage.rmagent.plist.tpl"),
-          "io.rackmanage.rmagent.plist",
-          [
-            `launchctl unload ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")} || true`,
-            `launchctl load ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")}`
-          ],
-          mode
-      )
+      await install({
+        loadCommands: [
+          {
+            command: `launchctl unload ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")}`,
+            ignoreErrors: true,
+          },
+          {
+            command: `launchctl load ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")}`,
+            ignoreErrors: false,
+          }
+        ],
+        mode,
+        root,
+        serviceFileName: "io.rackmanage.rmagent.plist",
+        serviceTemplate: path.join(__dirname, "io.rackmanage.rmagent.plist.tpl"),
+      })
     :
-      await install(
-          path.join(__dirname, "io.rackmanage.rmagent.plist.tpl"),
-          "io.rackmanage.rmagent.plist",
-          [
-            `sudo launchctl unload ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")} || true`,
-            `sudo launchctl load ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")}`
-          ],
-          mode
-      );
+      await install({
+        loadCommands: [
+          {
+            command: `sudo launchctl unload ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")}`,
+            ignoreErrors: true,
+          },
+          {
+            command: `sudo launchctl load ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")}`,
+            ignoreErrors: false,
+          }
+        ],
+        mode,
+        root,
+        serviceFileName: "io.rackmanage.rmagent.plist",
+        serviceTemplate: path.join(__dirname, "io.rackmanage.rmagent.plist.tpl"),
+      });
   } catch (error: any) {
     console.error(error);
   }
 }
 
-async function uninstallService(root: string) {
+async function uninstallService() {
   try {
     await uninstall(
       "io.rackmanage.rmagent.plist",
       [
-        `launchctl stop io.rackmanage.rmagent || true`,
-        `launchctl unload ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")}`
+        {
+          command: `launchctl stop io.rackmanage.rmagent`,
+          ignoreErrors: true,
+        },
+        {
+          command: `launchctl unload ${path.join(userServicePath(), "io.rackmanage.rmagent.plist")}`,
+          ignoreErrors: false,
+        }
       ],
       [
-        `sudo launchctl stop io.rackmanage.rmagent || true`,
-        `sudo launchctl unload ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")}`
+        {
+          command: `sudo launchctl stop io.rackmanage.rmagent`,
+          ignoreErrors: true,
+        },
+        {
+          command: `sudo launchctl unload ${path.join(systemServicePath(), "io.rackmanage.rmagent.plist")}`,
+          ignoreErrors: false,
+        }
       ]
     )
   } catch (error: any) {
@@ -55,11 +81,17 @@ async function uninstallService(root: string) {
   }
 }
 
-async function startService(root: string) {
+async function startService() {
   try {
     await runCommands(
-      ["launchctl start io.rackmanage.rmagent"],
-      ["sudo launchctl start io.rackmanage.rmagent"]
+      [{
+        command: "launchctl start io.rackmanage.rmagent",
+        ignoreErrors: false,
+      }],
+      [{
+        command: "sudo launchctl start io.rackmanage.rmagent",
+        ignoreErrors: false,
+      }]
     )
     
     console.log("Service started successfully");
@@ -68,11 +100,17 @@ async function startService(root: string) {
   }
 }
 
-async function stopService(root: string) {
+async function stopService() {
   try {
     await runCommands(
-      ["launchctl stop io.rackmanage.rmagent"],
-      ["sudo launchctl stop io.rackmanage.rmagent"]
+      [{
+        command: "launchctl stop io.rackmanage.rmagent",
+        ignoreErrors: false,
+      }],
+      [{
+        command: "sudo launchctl stop io.rackmanage.rmagent",
+        ignoreErrors: false,
+      }]
     )
     
     console.log("Service started successfully");

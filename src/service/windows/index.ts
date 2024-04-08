@@ -16,7 +16,7 @@ import {
 } from "../helpers"
 
 async function installService(root: string, mode: string) {
-  const {  systemPath, userPath } = dataPath();
+  const {  systemPath } = dataPath();
 
   let targetProcess = null;
 
@@ -86,7 +86,7 @@ async function installService(root: string, mode: string) {
       serviceData = serviceData
         .toString()
         .replaceAll("{{EXE_PATH}}", targetProcess)
-        .replaceAll("{{DATA_PATH}}", root);
+        .replaceAll("{{DATA_DIR}}", root);
       fs.writeFileSync(path.join(systemPath, "rmservice.xml"), serviceData);
 
       // Call rmservice.exe install to install the service
@@ -106,13 +106,13 @@ async function installService(root: string, mode: string) {
   }
 }
 
-async function uninstallService(root: string) {
+async function uninstallService() {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
   }
 
-  const { systemPath, userPath } = dataPath();
+  const { systemPath } = dataPath();
   const mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
   if (!(await isAdmin()) && mode !== "login") {
@@ -149,7 +149,9 @@ async function uninstallService(root: string) {
         return;
       }
 
-      if (!stdout.includes("NonExistent")) {
+      if (stdout.includes("NonExistent")) {
+        console.log("Service not installed");
+      } else {
         // Call rmservice.exe uninstall to uninstall the service
         const { stderr: stderr2 } = await execPromise(`"${path.join(systemPath, "rmservice.exe")}" uninstall`);
 
@@ -157,8 +159,6 @@ async function uninstallService(root: string) {
           console.error(stderr2);
           return;
         }
-      } else {
-        console.log("Service not installed");
       }
 
       // Remove the service wrapper from the system data directory
@@ -180,7 +180,7 @@ async function uninstallService(root: string) {
   }
 }
 
-async function startService(root: string) {
+async function startService() {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
@@ -226,7 +226,7 @@ async function startService(root: string) {
   }
 }
 
-async function stopService(root: string) {
+async function stopService() {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;

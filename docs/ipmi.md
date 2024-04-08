@@ -30,8 +30,7 @@ Set IPMI account for a server
 
 ```
 USAGE
-  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u
-    <value>]
+  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u <value>]
 
 FLAGS
   -a, --address=<value>   IPMI address

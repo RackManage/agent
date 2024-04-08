@@ -1,8 +1,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 const util = require("node:util");
 const { exec } = require("node:child_process");
 const execPromise = util.promisify(exec);
+import { confirm } from 'promptly'
 
 import {
   migrateDatabaseToSystemLocation,
@@ -18,10 +20,69 @@ import {
   userServicePath,
 } from "./index"
 
-async function install(serviceTemplate: string, serviceFileName: string, loadCommands: string[], mode: string) {
-  if (!(await isAdmin()) && mode !== "login") {
+async function sequentialCommands(commands: { command: string, ignoreErrors: boolean }[]) {
+  for (const command of commands) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const { stderr } = await execPromise(command.command);
+      if (stderr && !command.ignoreErrors) {
+        console.error(`Error executing command: ${command}`);
+        console.error(stderr);
+      }
+    } catch (error) {
+      if (!command.ignoreErrors) {
+        console.error(`Failed to execute command: ${command}`);
+        console.error(error);
+      }
+    }
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+// eslint-disable-next-line complexity
+async function install(config: {
+  loadCommands: { command: string, ignoreErrors: boolean }[],
+  mode: string,
+  root: string,
+  serviceFileName: string,
+  serviceTemplate: string,
+}) {
+
+  let targetProcess = null;
+  let nodePath = process.argv[0];
+
+  if (fs.existsSync(path.join(config.root, "bin", "node")) && fs.existsSync(path.join(config.root, "bin", "run.js"))) {
+    targetProcess = path.join(config.root, "bin", "run.js");
+    nodePath = path.join(config.root, "bin", "node");
+  } else if (fs.existsSync(path.join(config.root, "bin", "run.js"))) {
+      targetProcess = `${path.join(config.root, "bin", "run.js")}`;
+  } else {
+    console.error("Unable to find service executable");
+    return;
+  }
+
+  if (config.mode === "boot" && os.platform() === "darwin" && config.root.includes("/Users/")) {
+    console.error("Service cannot be installed with application in user directory. Please move the application out of /Users (e.g. /Library/Application Support/RackManage) and try again.");
+    return;
+  }
+
+  const admin = await isAdmin();
+  if (!(admin) && config.mode !== "login") {
     console.error("Please run this command as root");
     return;
+  } 
+  
+  if (admin && config.mode === "login") {
+    console.log("WARNING: Running as root in login mode. This may lead to errors.");
+    const response = await confirm("Do you want to continue? (y/n)");
+    if (!response) {
+      return;
+    }
   }
 
   const { systemPath, userPath } = dataPath();
@@ -35,47 +96,45 @@ async function install(serviceTemplate: string, serviceFileName: string, loadCom
 
   // Create the data directory if it doesn't exist
   if (
-    !fs.existsSync(mode === "login" ? userPath : systemPath)
+    !fs.existsSync(config.mode === "login" ? userPath : systemPath)
   ) {
-    fs.mkdirSync(mode === "login" ? userPath : systemPath, {
+    await fs.mkdirSync(config.mode === "login" ? userPath : systemPath, {
       recursive: true,
     });
   }
 
   // Create the service directory if it doesn't exist
   if (
-    !fs.existsSync(mode === "login" ? userServicePath() : systemServicePath())
+    !fs.existsSync(config.mode === "login" ? userServicePath() : systemServicePath())
   ) {
-    fs.mkdirSync(mode === "login" ? userServicePath() : systemServicePath(), {
+    await fs.mkdirSync(config.mode === "login" ? userServicePath() : systemServicePath(), {
       recursive: true,
     });
   }
 
-  // Copy the current executable to the user data directory
-  fs.copyFileSync(
-    process.argv[0],
-    path.join(mode === "login" ? userPath : systemPath, "rmagent")
-  );
-
-  let serviceData = fs.readFileSync(serviceTemplate);
+  let serviceData = fs.readFileSync(config.serviceTemplate);
   serviceData = serviceData
     .toString()
-    .replaceAll("{{DATA_DIR}}", mode === "login" ? userPath : systemPath);
+    .replaceAll("{{EXE_PATH1}}", nodePath)
+    .replaceAll("{{EXE_PATH2}}", targetProcess)
+    .replaceAll("{{DATA_DIR}}", config.mode === "login" ? userPath : systemPath)
+    .replaceAll("{{WORKING_DIR}}", config.root);
 
-  fs.writeFileSync(
+  await fs.writeFileSync(
     path.join(
-      mode === "login" ? userServicePath() : systemServicePath(),
-      serviceFileName
+      config.mode === "login" ? userServicePath() : systemServicePath(),
+      config.serviceFileName
     ),
     serviceData
   );
 
-  // Execute OS-specific load/start commands
-  await Promise.all(loadCommands.map(async (command: string) => {
-    await execPromise(command);
-  }));
+  // Wait for the file to be written
+  await sleep(1000);
 
-  if (mode === "login") {
+  // Execute OS-specific load/start commands
+  await sequentialCommands(config.loadCommands);
+
+  if (config.mode === "login") {
     migrateDatabaseToUserLocation();
 
     if (await isAdmin()) {
@@ -91,8 +150,8 @@ async function install(serviceTemplate: string, serviceFileName: string, loadCom
 
 async function uninstall(
   serviceFileName: string,
-  userUnloadCommands: string[],
-  systemUnloadCommands: string[]
+  userUnloadCommands: { command: string, ignoreErrors: boolean }[],
+  systemUnloadCommands: { command: string, ignoreErrors: boolean }[]
 ) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
@@ -102,19 +161,24 @@ async function uninstall(
   const { systemPath, userPath } = dataPath();
   const mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
-  if (!(await isAdmin()) && mode !== "login") {
+  const admin = await isAdmin();
+  if (!(admin) && mode !== "login") {
     console.error("Please run this command as root");
     return;
   }
 
+  if (admin && mode === "login") {
+    console.log("WARNING: Running as root in login mode. This may lead to errors.");
+    const response = await confirm("Do you want to continue? (y/n)");
+    if (!response) {
+      return;
+    }
+  }
+
   (mode === "login") ?
-    await Promise.all(userUnloadCommands.map(async (command: string) => {
-      await execPromise(command);
-    }))
+    await sequentialCommands(userUnloadCommands)
   :
-    await Promise.all(systemUnloadCommands.map(async (command: string) => {
-      await execPromise(command);
-    }))
+    await sequentialCommands(systemUnloadCommands);
 
   // Remove the service file
   if (
@@ -132,17 +196,6 @@ async function uninstall(
     );
   }
 
-  // Remove the executable
-  if (
-      fs.existsSync(
-        path.join(mode === "login" ? userPath : systemPath, "rmagent")
-      )
-  ) {
-    fs.unlinkSync(
-      path.join(mode === "login" ? userPath : systemPath, "rmagent")
-    );
-  }
-
   migrateDatabaseToUserLocation();
 
   if (await isAdmin()) {
@@ -153,7 +206,7 @@ async function uninstall(
   console.log("Service uninstalled");
 }
 
-async function runCommands(userCommands: string[], systemCommands: string[]) {
+async function runCommands(userCommands: { command: string, ignoreErrors: boolean }[], systemCommands: { command: string, ignoreErrors: boolean }[]) {
   if (!(await serviceInstalled())) {
     console.error("Service not installed");
     return;
@@ -168,13 +221,9 @@ async function runCommands(userCommands: string[], systemCommands: string[]) {
       return;
     }
 
-    await Promise.all(userCommands.map(async (command: string) => {
-      await execPromise(command);
-    }));
+    await sequentialCommands(systemCommands);
   } else { 
-    await Promise.all(systemCommands.map(async (command: string) => {
-      await execPromise(command);
-    }));
+    await sequentialCommands(userCommands);
   }
 }
 

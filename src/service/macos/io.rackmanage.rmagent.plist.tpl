@@ -4,9 +4,12 @@
   <dict>
     <key>Label</key>
     <string>io.rackmanage.rmagent</string>
+    <key>Program</key>
+    <string>{{EXE_PATH1}}</string>
     <key>ProgramArguments</key>
     <array>
-      <string>{{DATA_DIR}}/rmagent</string>
+      <string>{{EXE_PATH1}}</string>
+      <string>{{EXE_PATH2}}</string>
       <string>start-monitoring</string>
       <string>--path</string>
       <string>{{DATA_DIR}}/rmagent.db</string>
@@ -21,5 +24,7 @@
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <key>WorkingDirectory</key>
+    <string>{{WORKING_DIR}}</string>
   </dict>
 </plist>

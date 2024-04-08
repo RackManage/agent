@@ -5,6 +5,7 @@ const execPromise = util.promisify(exec);
 const fs = require("node:fs");
 const fsPromises = fs.promises;
 const path = require("node:path");
+const Registry = require("winreg");
 
 import { dataPath } from "../../db/paths"
 
@@ -130,7 +131,22 @@ function systemServicePath() {
 async function serviceInstalled() {
   switch (os.platform()) {
     case "win32": {
-      if (fs.existsSync(path.join(userServicePath(), "rmagent.exe"))) {
+      const regKey = new Registry({
+        hive: Registry.HKCU,
+        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      });
+
+      const regCheck = await new Promise((resolve, _) => {
+        regKey.get("RackManage", (err: any, item: any) => {
+          if (err) {
+            resolve(null);
+          } else {
+            resolve(item.value);
+          }
+        });
+      });
+
+      if (regCheck) {
         return true;
       }
 

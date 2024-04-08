@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart={{DATA_DIR}}/rmagent start-monitoring
+ExecStart={{EXE_PATH1}} {{EXE_PATH2}} start-monitoring --path {{DATA_DIR}}/rmagent.db
 WorkingDirectory={{DATA_DIR}}
 
 # Security settings more suited for a system-wide service
