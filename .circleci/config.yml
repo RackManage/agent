@@ -251,10 +251,8 @@ workflows:
   build_and_release:
     when:
       or:
-        - and:
-          - equal: [ main, << pipeline.git.branch >> ]
-          - not:
-              equal: [ "", << pipeline.git.tag >> ]
+        - not:
+            equal: [ "", << pipeline.git.tag >> ]
         - not:
             equal: [ "", << pipeline.parameters.channel >> ]
     jobs:

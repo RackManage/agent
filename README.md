@@ -194,9 +194,11 @@ aws s3 cp Release.key s3://rmagent/apt/Release.key
 
 ## Automated Builds
 
-The agent is built and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing to the `main` branch. Commits with a tag will push the agent to the `stable` release channel, while commits without a tag will push the agent to the `beta` release channel. The apt repository does not support release channels and will only be updated with a stable release.
+The agent is built and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing tags to the repository. Pushing tags will trigger builds to the `stable` release channel.
 
-Manual builds can be triggered in CircleCI by running `Trigger Pipeline` on the `main` branch with the `channel` parameter set to the desired release channel (`stable` or `beta`).
+Manual builds can be triggered in CircleCI by running `Trigger Pipeline` on the `main` branch with the `channel` parameter set to the desired release channel (`stable` or `beta`). Beta builds will not update the apt repository as it does not support release channels.
+
+Beta releases are not run automatically due to the cost of MacOS builds. To run a beta build, you must manually trigger the build in CircleCI.
 
 Version numbers are pulled from the `package.json` file and are used to publish to Cloudflare R2 / the CLI `update` command. Git version tags are ignored in the build process and are for reference only.
 
