@@ -194,7 +194,7 @@ aws s3 cp Release.key s3://rmagent/apt/Release.key
 
 ## Automated Builds
 
-[![CircleCI](https://dl.circleci.com/insights-snapshot/gh/RackManage/agent/main/build_and_release/badge.svg?window=24h)](https://app.circleci.com/insights/github/RackManage/agent?branches=main&workflows=build_and_release&reporting-window=last-24-hours&insights-snapshot=true)
+[![CircleCI](https://dl.circleci.com/insights-snapshot/gh/RackManage/agent/main/build_and_release/badge.svg?window=30d)](https://app.circleci.com/insights/github/RackManage/agent?branches=main&workflows=build_and_release&reporting-window=last-30-days&insights-snapshot=true)
 
 
 The agent is built and distributed automatically through CircleCI. The build process is defined in the `.circleci/config.yml` file and is triggered by pushing tags to the repository. Pushing tags will trigger builds to the `stable` release channel.
@@ -237,6 +237,19 @@ To obtain the GPG keys, you must export the public and private keys with `gpg -a
 The public key should also be uploaded to the Ubuntu keyserver with `gpg --send-keys <key-id> --keyserver keyserver.ubuntu.com`.
 
 The build process will also update `install.sh` and the `Release.key` file in the Debian repository using the public key in the `GPG_PUBLIC_KEY` environment variable.
+
+## Deleting Versions
+oclif does not provide any built in method to delete old versions from S3 storage. To remove previous versions from the update server, use the following command:
+
+```bash
+./scripts/delete-s3-version.sh <version>
+```
+
+Where `<version>` is the version number to delete (e.g. `1.0.0`).
+
+You must have `jq` and `aws` installed to run this script, and your S3 credentials must be set in the `AWS_` environment variables as described above.
+
+Note that this does not remove the latest version from the public / beta release channels or the apt repo, it only removes the ability for users to update to that specific version from the CLI.
 
 ## Service Management
 This agent is designed to run as a service in both user and system contexts (on login and on boot) for Linux, Windows, and MacOS, using systemd, launchd, and the Windows Service Manager, respectively. The service is configured to run the agent in the background and restart it if it crashes.
