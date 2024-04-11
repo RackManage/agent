@@ -245,7 +245,7 @@ The public key should also be uploaded to the Ubuntu keyserver with `gpg --send-
 The build process will also update `install.sh` and the `Release.key` file in the Debian repository using the public key in the `GPG_PUBLIC_KEY` environment variable.
 
 ### Signing Windows Installers
-Windows installers are signed with a Certum Open Source Code Signing Certificate. Due to the smart card / HSM requirements for signing Windows installers, the Windows installer is not signed during the build process. In the future, this process may be automated using a locally hosted CircleCI runner with the smart card attached.
+Windows installers are signed with a Certum Open Source Code Signing Certificate. Due to the smart card / HSM requirements for signing Windows installers, the Windows installer is not signed during the build process.
 
 To sign the installer, run the `scripts/sign-windows-installer.ps1` script with the following command:
 
