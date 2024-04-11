@@ -120,6 +120,12 @@ To build installers for Windows, run the following command:
 oclif pack windows
 ```
 
+Signing with the Certum certificate cannot be performed via `oclif` and must be done manually. To sign the installers, run the following command:
+
+```bash
+signtool sign /n "Carter Roeser" /fd SHA256 /tr http://time.certum.pl /td sha256 /v <path-to-installer>
+```
+
 ## Building Debian Packages
 
 To build Debian packages, first, set the `RMAGENT_DEB_KEY` environment variable to the GPG key ID to sign the package with. Then run the following command:
@@ -237,6 +243,17 @@ To obtain the GPG keys, you must export the public and private keys with `gpg -a
 The public key should also be uploaded to the Ubuntu keyserver with `gpg --send-keys <key-id> --keyserver keyserver.ubuntu.com`.
 
 The build process will also update `install.sh` and the `Release.key` file in the Debian repository using the public key in the `GPG_PUBLIC_KEY` environment variable.
+
+### Signing Windows Installers
+Windows installers are signed with a Certum Open Source Code Signing Certificate. Due to the smart card / HSM requirements for signing Windows installers, the Windows installer is not signed during the build process. In the future, this process may be automated using a locally hosted CircleCI runner with the smart card attached.
+
+To sign the installer, run the `scripts/sign-windows-installer.ps1` script with the following command:
+
+```powershell
+.\scripts\sign-windows-installer.ps1 -version <version> -sha <sha> [-promote <channel>]
+```
+
+Where `<version>` is the version number to sign (e.g. `1.0.0`) and `<sha>` is the 7 character short commit hash of the installer. The `-promote` flag is optional and will promote the installer to the specified release channel after signing. The script requires that `signtool` and `aws` are installed and in the system path, and that the `AWS_` environment variables are set as described above. The certificate must be installed in the system certificate store. For signing with the Certum Code Signing Certificate, the Certum SimplySign utility must be installed and logged in.
 
 ## Deleting Versions
 oclif does not provide any built in method to delete old versions from S3 storage. To remove previous versions from the update server, use the following command:
