@@ -192,15 +192,15 @@ jobs:
       - run:
           name: Pack Linux Tarballs
           command: |
-            yarn oclif pack tarballs --targets linux-x64,linux-arm64,linux-arm  --parallel --xz
+            yarn oclif pack tarballs --targets linux-x64,linux-arm64 --parallel --xz
       - run:
           name: Upload Linux Tarballs
           command: |
-            yarn oclif upload tarballs --targets linux-x64,linux-arm64,linux-arm --xz
+            yarn oclif upload tarballs --targets linux-x64,linux-arm64 --xz
       - run: 
           name: Promote Linux Tarball Release
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets linux-x64,linux-arm64,linux-arm
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets linux-x64,linux-arm64
       - when:
           condition:
             and:
