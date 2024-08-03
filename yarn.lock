@@ -6476,10 +6476,10 @@ widest-line@^3.1.0:
   dependencies:
     string-width "^4.0.0"
 
-winreg@1.2.4:
-  version "1.2.4"
-  resolved "https://registry.npmjs.org/winreg/-/winreg-1.2.4.tgz"
-  integrity sha512-IHpzORub7kYlb8A43Iig3reOvlcBJGX9gZ0WycHhghHtA65X0LYnMRuJs+aH1abVnMJztQkvQNlltnbPi5aGIA==
+winreg@1.2.5:
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/winreg/-/winreg-1.2.5.tgz#b650383e89278952494b5d113ba049a5a4fa96d8"
+  integrity sha512-uf7tHf+tw0B1y+x+mKTLHkykBgK2KMs3g+KlzmyMbLvICSHQyB/xOFjTT8qZ3oeTFyU7Bbj4FzXitGG6jvKhYw==
 
 wordwrap@^1.0.0:
   version "1.0.0"
