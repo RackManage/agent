@@ -101,7 +101,7 @@
     "@oclif/test": "^3",
     "@types/chai": "^4",
     "@types/klaw": "^3.0.6",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.7",
     "@types/node": "^20",
     "@types/promptly": "^3.0.5",
     "@types/which": "^3.0.3",
