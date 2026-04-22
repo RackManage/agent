@@ -14,7 +14,7 @@ USAGE
   $ rackmanage login [TOKEN] [--broker-url <value>] [--name <value>]
 
 ARGUMENTS
-  [TOKEN]  Enrollment token or enrollment URL
+  [TOKEN]  Enrollment token
 
 FLAGS
   --broker-url=<value>  Broker base URL

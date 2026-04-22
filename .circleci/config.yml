@@ -23,7 +23,7 @@ commands:
           command: cat bash.env > $BASH_ENV
       - node/install:
           install-yarn: true
-          node-version: '20'
+          node-version: '22'
       - run:
           name: Check Node Version
           command: node --version
