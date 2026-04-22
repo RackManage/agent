@@ -1,4 +1,3 @@
-const keytar = require("keytar");
 const crypto = require("node:crypto");
 const os = require("node:os");
 const packageVersion = require("../../package.json").version;
@@ -14,6 +13,10 @@ const publicKeyFingerprintKey = "deviceKeyFingerprint";
 const workspaceIdKey = "workspaceId";
 const workspaceTypeKey = "workspaceType";
 const keytarService = "rackmanage";
+
+function getKeytar() {
+  return require("keytar");
+}
 
 type BrokerConfig = {
   agentUid: null | string,
@@ -141,10 +144,12 @@ async function postBrokerJson<T>(brokerUrl: string, pathname: string, body: unkn
 }
 
 async function storePrivateKey(deviceId: string, privateKeyPem: string) {
+  const keytar = getKeytar();
   await keytar.setPassword(keytarService, keyAccount(deviceId), privateKeyPem);
 }
 
 async function loadPrivateKey(deviceId: string) {
+  const keytar = getKeytar();
   return keytar.getPassword(keytarService, keyAccount(deviceId));
 }
 
@@ -153,6 +158,7 @@ async function deletePrivateKey(deviceId: null | string) {
     return;
   }
 
+  const keytar = getKeytar();
   await keytar.deletePassword(keytarService, keyAccount(deviceId));
 }
 

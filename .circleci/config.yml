@@ -203,7 +203,7 @@ jobs:
       target:
         type: string
     macos:
-      xcode: 15.2.0
+      xcode: 26.4.0
     steps:
       - prep-env
       - install-packages-targeted:
@@ -223,7 +223,7 @@ jobs:
 
   pack-mac-installer:
     macos:
-      xcode: 15.2.0
+      xcode: 26.4.0
     steps:
       - prep-env
       - install-packages-generic

@@ -1,13 +1,16 @@
 const { exec } = require("node:child_process");
 const { promisify } = require("node:util");
 const execPromise = promisify(exec);
-const keytar = require('keytar');
 
 import { closeDb, getCredential, getServer, openOrCreateDatabase } from "../db";
 import { ensureFirebaseSession } from "../firebase/auth";
 import { auth } from "../firebase/firebase-config";
 import { commandPath, getRealtimeContext } from "../firebase/paths";
 import { firebaseJsonRequest } from "../firebase/rest";
+
+function getKeytar() {
+  return require("keytar");
+}
 
 async function ipmiAvailable() {
   // Check if `ipmitool` is installed in path / current directory
@@ -72,6 +75,7 @@ async function runIpmiCommand(server: string, command: string) {
     }
 
     // Get IPMI password from keychain
+    const keytar = getKeytar();
     const password = await keytar.getPassword("rackmanage", credential.credential);
 
     // Execute IPMI command

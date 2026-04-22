@@ -1,7 +1,5 @@
-const sqlite3 = require("sqlite3").verbose();
 const fs = require("node:fs");
 const fsPromises = fs.promises;
-const keytar = require("keytar");
 const crypto = require("node:crypto");
 const os = require("node:os");
 const path = require("node:path");
@@ -9,6 +7,14 @@ const { exit } = require("node:process");
 
 import { getEffectiveUidGid, isAdmin } from '../service/helpers'
 import { dataPath, dbName, findDatabasePath } from './paths'
+
+function getSqlite3() {
+  return require("sqlite3").verbose();
+}
+
+function getKeytar() {
+  return require("keytar");
+}
 
 function deleteWithRetry(filePath: string , maxRetries = 5, interval = 100, attempt = 0) {
   try {
@@ -57,6 +63,7 @@ function migrateDatabaseToSystemLocation() {
 }
 
 async function openOrCreateDatabase(dbPath = findDatabasePath()) {
+  const sqlite3 = getSqlite3();
   const { systemPath } = dataPath();
   if (dbPath.startsWith(systemPath)) {
     if (!(await isAdmin())) {
@@ -205,6 +212,7 @@ function getServer(db: any, server: string) {
 function addCredentials(db: any, ipmi: { address: string, flags: string, password: string, port: string, serverId: string,  username: string }) {
   return new Promise((resolve, reject) => {
     const accountId = "rackmanage_" + crypto.randomUUID();
+    const keytar = getKeytar();
     keytar.setPassword("rackmanage", accountId, ipmi.password).then(() => {
       try {
         db.run(`REPLACE INTO ipmi (server_id, address, username, credential, port, flags) VALUES (?, ?, ?, ?, ?, ?)`, [ipmi.serverId, ipmi.address, ipmi.username, accountId, ipmi.port, ipmi.flags], (err: Error) => {
