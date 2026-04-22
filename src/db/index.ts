@@ -1,11 +1,11 @@
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("node:fs");
 const fsPromises = fs.promises;
+const keytar = require("keytar");
+const crypto = require("node:crypto");
 const os = require("node:os");
 const path = require("node:path");
 const { exit } = require("node:process");
-const crypto = require("node:crypto");
-const keytar = require("keytar");
 
 import { getEffectiveUidGid, isAdmin } from '../service/helpers'
 import { dataPath, dbName, findDatabasePath } from './paths'

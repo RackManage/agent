@@ -1,9 +1,9 @@
-const fs = require("node:fs");
-const path = require("node:path");
-const os = require("node:os");
-const util = require("node:util");
 const { exec } = require("node:child_process");
-const execPromise = util.promisify(exec);
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { promisify } = require("node:util");
+const execPromise = promisify(exec);
 import { confirm } from 'promptly'
 
 import {
@@ -26,15 +26,15 @@ async function sequentialCommands(commands: { command: string, ignoreErrors: boo
     try {
       // eslint-disable-next-line no-await-in-loop
       const { stderr } = await execPromise(command.command);
-      if (stderr && !command.ignoreErrors) {
-        console.error(`Error executing command: ${command.command}`);
-        console.error(stderr);
+      if (stderr) {
+        console.warn(stderr);
       }
     } catch (error) {
-      if (!command.ignoreErrors) {
-        console.error(`Failed to execute command: ${command.command}`);
-        console.error(error);
+      if (command.ignoreErrors) {
+        continue;
       }
+
+      throw new Error(`Failed to execute command: ${command.command}`, { cause: error });
     }
   }
 }
@@ -90,7 +90,7 @@ async function install(config: {
 
   if (await serviceInstalled()) {
     console.log(
-      "Service already installed. Run `rmagent service uninstall` to remove the service."
+      "Service already installed. Run `rackmanage service uninstall` to remove the service."
     );
     return;
   }
@@ -217,7 +217,7 @@ async function runCommands(userCommands: { command: string, ignoreErrors: boolea
   const mode = findDatabasePath() === path.join(systemPath, dbName) ? "boot" : "login";
 
   if (mode === "boot") {
-    if (!isAdmin()) {
+    if (!(await isAdmin())) {
       console.error("Please run this command as root.");
       return;
     }

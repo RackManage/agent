@@ -7,11 +7,9 @@ import { ipmiAvailable, runIpmiCommand } from '../../ipmi/index'
 
 export default class Test extends Command {
   static description = 'Test IPMI connection'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
-
   static flags = {
     server: Flags.string({char: 's', description: 'Server address'}),
   }

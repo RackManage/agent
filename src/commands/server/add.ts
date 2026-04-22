@@ -63,11 +63,9 @@ async function setIpmi(flags: any) {
 
 export default class Add extends Command {
   static description = 'Add a server'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
-
   static flags = {
     interval: Flags.integer({char: 'i', description: 'Interval in minutes'}),
     ipmiAddress: Flags.string({char: 'a', description: 'IPMI address'}),

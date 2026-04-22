@@ -8,11 +8,9 @@ export default class StartMonitoring extends Command {
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
-
   static flags = {
     path: Flags.string({char: 'p', description: 'Path to database file'}),
   }
-
   static hidden = true;
 
   public async run(): Promise<void> {

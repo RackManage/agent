@@ -1,23 +1,23 @@
-`rmagent logout`
-================
+`rackmanage logout`
+===================
 
-Disconnect agent from Rack Manage account
+Disconnect this device from Rack Manage
 
-* [`rmagent logout`](#rmagent-logout)
+* [`rackmanage logout`](#rackmanage-logout)
 
-## `rmagent logout`
+## `rackmanage logout`
 
-Disconnect agent from Rack Manage account
+Disconnect this device from Rack Manage
 
 ```
 USAGE
-  $ rmagent logout
+  $ rackmanage logout
 
 DESCRIPTION
-  Disconnect agent from Rack Manage account
+  Disconnect this device from Rack Manage
 
 EXAMPLES
-  $ rmagent logout
+  $ rackmanage logout
 ```
 
 _See code: [src/commands/logout.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/logout.ts)_

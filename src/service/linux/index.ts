@@ -16,18 +16,18 @@ async function installService(root: string, mode: string) {
             ignoreErrors: true,
           },
           {
-            command: `systemctl --user enable rmagent.service`,
+            command: `systemctl --user enable rackmanage.service`,
             ignoreErrors: false,
           },
           {
-            command: `systemctl --user start rmagent.service`,
+            command: `systemctl --user start rackmanage.service`,
             ignoreErrors: false,
           }
         ],
         mode,
         root,
-        serviceFileName: "rmagent.service",
-        serviceTemplate: path.join(__dirname, "rmagent-user.service.tpl"),
+        serviceFileName: "rackmanage.service",
+        serviceTemplate: path.join(__dirname, "rackmanage-user.service.tpl"),
       })
     :
       await install({
@@ -37,18 +37,18 @@ async function installService(root: string, mode: string) {
             ignoreErrors: true,
           },
           {
-            command: `sudo systemctl enable rmagent.service`,
+            command: `sudo systemctl enable rackmanage.service`,
             ignoreErrors: false,
           },
           {
-            command: `sudo systemctl start rmagent.service`,
+            command: `sudo systemctl start rackmanage.service`,
             ignoreErrors: false,
           }
         ],
         mode,
         root,
-        serviceFileName: "rmagent.service",
-        serviceTemplate: path.join(__dirname, "rmagent-system.service.tpl"),
+        serviceFileName: "rackmanage.service",
+        serviceTemplate: path.join(__dirname, "rackmanage-system.service.tpl"),
       });
   } catch (error: any) {
     console.error(error);
@@ -58,14 +58,14 @@ async function installService(root: string, mode: string) {
 async function uninstallService() {
   try {
     await uninstall(
-      "rmagent.service",
+      "rackmanage.service",
       [
         {
-          command: `systemctl --user stop rmagent.service`,
+          command: `systemctl --user stop rackmanage.service`,
           ignoreErrors: true,
         },
         {
-          command: `systemctl --user disable rmagent.service`,
+          command: `systemctl --user disable rackmanage.service`,
           ignoreErrors: false,
         },
         {
@@ -75,11 +75,11 @@ async function uninstallService() {
       ],
       [
         {
-          command: `sudo systemctl stop rmagent.service`,
+          command: `sudo systemctl stop rackmanage.service`,
           ignoreErrors: true,
         },
         {
-          command: `sudo systemctl disable rmagent.service`,
+          command: `sudo systemctl disable rackmanage.service`,
           ignoreErrors: false,
         },
         {
@@ -97,11 +97,11 @@ async function startService() {
   try {
     await runCommands(
       [{
-        command: "systemctl --user start rmagent.service",
+        command: "systemctl --user start rackmanage.service",
         ignoreErrors: false,
       }],
       [{
-        command: "sudo systemctl start rmagent.service",
+        command: "sudo systemctl start rackmanage.service",
         ignoreErrors: false,
       }]
     )
@@ -116,11 +116,11 @@ async function stopService() {
   try {
     await runCommands(
       [{
-        command: "systemctl --user stop rmagent.service",
+        command: "systemctl --user stop rackmanage.service",
         ignoreErrors: false,
       }],
       [{
-        command: "sudo systemctl stop rmagent.service",
+        command: "sudo systemctl stop rackmanage.service",
         ignoreErrors: false,
       }]
     )

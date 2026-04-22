@@ -20,11 +20,11 @@
 
 import type { Stats } from 'node:fs';
 
-import * as klaw from 'klaw';
+import klaw from 'klaw'
 import { spawn } from 'node:child_process';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as whichMod from 'which';
+import { unlinkSync } from 'node:fs';
+import path from 'node:path';
+import whichMod from 'which';
 
 export async function whichSpawn(
 	programName: string,
@@ -88,7 +88,7 @@ export async function signFilesForNotarization() {
 
 				if (path.basename(item.path).endsWith('.node.bak')) {
 					console.log('Removing pkg .node.bak file', item.path);
-					fs.unlinkSync(item.path);
+					unlinkSync(item.path);
 				}
 
 				if (
@@ -96,7 +96,7 @@ export async function signFilesForNotarization() {
 					path.dirname(item.path).includes('test')
 				) {
 					console.log('Removing zip', item.path);
-					fs.unlinkSync(item.path);
+					unlinkSync(item.path);
 				}
 			})
 			.on('end', resolve)

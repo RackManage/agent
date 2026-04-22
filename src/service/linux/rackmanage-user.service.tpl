@@ -6,10 +6,10 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart={{EXE_PATH1}} {{EXE_PATH2}} start-monitoring --path {{DATA_DIR}}/rmagent.db
+ExecStart={{EXE_PATH1}} {{EXE_PATH2}} start-monitoring --path {{DATA_DIR}}/rackmanage-agent.db
 WorkingDirectory={{DATA_DIR}}
-StandardOutput=append:{{DATA_DIR}}/rmagent.log
-StandardError=append:{{DATA_DIR}}/rmagent.error.log
+StandardOutput=append:{{DATA_DIR}}/rackmanage-agent.log
+StandardError=append:{{DATA_DIR}}/rackmanage-agent.error.log
 
 [Install]
 # User services are typically wanted by the default target for the user session

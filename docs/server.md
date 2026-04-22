@@ -1,19 +1,19 @@
-`rmagent server`
-================
+`rackmanage server`
+===================
 
 Manage servers monitored by the agent
 
-* [`rmagent server add`](#rmagent-server-add)
-* [`rmagent server list`](#rmagent-server-list)
+* [`rackmanage server add`](#rackmanage-server-add)
+* [`rackmanage server list`](#rackmanage-server-list)
 
-## `rmagent server add`
+## `rackmanage server add`
 
 Add a server
 
 ```
 USAGE
-  $ rmagent server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u
-    <value>] [-m <value>] [-n <value>] [-p <value>] [-s <value>]
+  $ rackmanage server add [-i <value>] [-a <value>] [-f <value>] [-P <value>] [-o <value>] [-u <value>] [-m
+    <value>] [-n <value>] [-p <value>] [-s <value>]
 
 FLAGS
   -P, --ipmiPassword=<value>  IPMI password
@@ -31,24 +31,24 @@ DESCRIPTION
   Add a server
 
 EXAMPLES
-  $ rmagent server add
+  $ rackmanage server add
 ```
 
 _See code: [src/commands/server/add.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/server/add.ts)_
 
-## `rmagent server list`
+## `rackmanage server list`
 
 List all servers
 
 ```
 USAGE
-  $ rmagent server list
+  $ rackmanage server list
 
 DESCRIPTION
   List all servers
 
 EXAMPLES
-  $ rmagent server list
+  $ rackmanage server list
 ```
 
 _See code: [src/commands/server/list.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/server/list.ts)_

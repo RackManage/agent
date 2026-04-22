@@ -1,20 +1,20 @@
-`rmagent service`
-=================
+`rackmanage service`
+====================
 
 Manage the agent background service
 
-* [`rmagent service install`](#rmagent-service-install)
-* [`rmagent service start`](#rmagent-service-start)
-* [`rmagent service stop`](#rmagent-service-stop)
-* [`rmagent service uninstall`](#rmagent-service-uninstall)
+* [`rackmanage service install`](#rackmanage-service-install)
+* [`rackmanage service start`](#rackmanage-service-start)
+* [`rackmanage service stop`](#rackmanage-service-stop)
+* [`rackmanage service uninstall`](#rackmanage-service-uninstall)
 
-## `rmagent service install`
+## `rackmanage service install`
 
 Installs the agent service
 
 ```
 USAGE
-  $ rmagent service install [-f] [-t <value>]
+  $ rackmanage service install [-f] [-t <value>]
 
 FLAGS
   -f, --force            Force the installation without confirmation
@@ -24,58 +24,58 @@ DESCRIPTION
   Installs the agent service
 
 EXAMPLES
-  $ rmagent service install
+  $ rackmanage service install
 ```
 
 _See code: [src/commands/service/install.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/install.ts)_
 
-## `rmagent service start`
+## `rackmanage service start`
 
 Start the agent service
 
 ```
 USAGE
-  $ rmagent service start
+  $ rackmanage service start
 
 DESCRIPTION
   Start the agent service
 
 EXAMPLES
-  $ rmagent service start
+  $ rackmanage service start
 ```
 
 _See code: [src/commands/service/start.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/start.ts)_
 
-## `rmagent service stop`
+## `rackmanage service stop`
 
 Stop the agent service
 
 ```
 USAGE
-  $ rmagent service stop
+  $ rackmanage service stop
 
 DESCRIPTION
   Stop the agent service
 
 EXAMPLES
-  $ rmagent service stop
+  $ rackmanage service stop
 ```
 
 _See code: [src/commands/service/stop.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/stop.ts)_
 
-## `rmagent service uninstall`
+## `rackmanage service uninstall`
 
 Uninstalls the agent service
 
 ```
 USAGE
-  $ rmagent service uninstall
+  $ rackmanage service uninstall
 
 DESCRIPTION
   Uninstalls the agent service
 
 EXAMPLES
-  $ rmagent service uninstall
+  $ rackmanage service uninstall
 ```
 
 _See code: [src/commands/service/uninstall.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/service/uninstall.ts)_

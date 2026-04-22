@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>io.rackmanage.rmagent</string>
+    <string>io.rackmanage.agent</string>
     <key>Program</key>
     <string>{{EXE_PATH1}}</string>
     <key>ProgramArguments</key>
@@ -12,12 +12,12 @@
       <string>{{EXE_PATH2}}</string>
       <string>start-monitoring</string>
       <string>--path</string>
-      <string>{{DATA_DIR}}/rmagent.db</string>
+      <string>{{DATA_DIR}}/rackmanage-agent.db</string>
     </array>
     <key>StandardOutPath</key>
-    <string>{{DATA_DIR}}/rmagent.log</string>
+    <string>{{DATA_DIR}}/rackmanage-agent.log</string>
     <key>StandardErrorPath</key>
-    <string>{{DATA_DIR}}/rmagent.error.log</string>
+    <string>{{DATA_DIR}}/rackmanage-agent.error.log</string>
     <key>Debug</key>
     <true/>
     <key>RunAtLoad</key>

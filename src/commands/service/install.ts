@@ -8,11 +8,9 @@ import { manageService } from '../../service'
 
 export default class Install extends Command {
   static description = 'Installs the agent service'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
-
   static flags = {
     force: Flags.boolean({char: 'f', description: 'Force the installation without confirmation'}),
     trigger: Flags.string({char: 't', description: `When to trigger the service (login, boot). ${os.platform() === "win32" ? "Admin" : "Sudo"} permissions required for boot trigger.`}),

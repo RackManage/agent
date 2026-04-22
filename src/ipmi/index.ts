@@ -1,11 +1,13 @@
-const util = require("node:util");
 const { exec } = require("node:child_process");
-const execPromise = util.promisify(exec);
+const { promisify } = require("node:util");
+const execPromise = promisify(exec);
 const keytar = require('keytar');
-const needle = require('needle');
 
 import { closeDb, getCredential, getServer, openOrCreateDatabase } from "../db";
+import { ensureFirebaseSession } from "../firebase/auth";
 import { auth } from "../firebase/firebase-config";
+import { commandPath, getRealtimeContext } from "../firebase/paths";
+import { firebaseJsonRequest } from "../firebase/rest";
 
 async function ipmiAvailable() {
   // Check if `ipmitool` is installed in path / current directory
@@ -23,58 +25,69 @@ async function ipmiAvailable() {
 }
 
 async function updateCommandStatus(command: any, status: string) {
-  if (!auth.currentUser) {
-    return;
-  }
-
   const sqliteDB = await openOrCreateDatabase();
-  const authToken = await auth.currentUser.getIdToken();
 
-  // Copy command object, remove id, update status
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const updatedCommand = (({ id, ...o }) => o)(command)
-  updatedCommand.status = status;
+  try {
+    if (!(await ensureFirebaseSession(sqliteDB, false)) || !auth.currentUser) {
+      return;
+    }
 
-  await needle('put', `https://rmagent.firebaseio.com/users/${auth.currentUser.uid}/commands/${command.id}.json?auth=${authToken}`,
-  updatedCommand, 
-  { json: true });
+    const context = await getRealtimeContext(sqliteDB);
+    const authToken = await auth.currentUser.getIdToken();
 
-  await closeDb(sqliteDB);
+    // Copy command object, remove id, update status
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const updatedCommand = (({ id, ...o }) => o)(command)
+    updatedCommand.status = status;
+
+    await firebaseJsonRequest(
+      "PUT",
+      commandPath(context, `${command.id}`),
+      authToken,
+      updatedCommand
+    );
+  } finally {
+    await closeDb(sqliteDB);
+  }
 }
 
 async function runIpmiCommand(server: string, command: string) {
   const sqliteDB = await openOrCreateDatabase();
 
-  // Get server details from database
-  const serverObject: any = await getServer(sqliteDB, server);
-
-  if (!serverObject) {
-    console.error("Server not found.");
-    return;
-  }
-
-  // Get IPMI credentials from database
-  const credential: any = await getCredential(sqliteDB, serverObject.id);
-
-  if (!credential) {
-    console.error("IPMI credentials not found for server", serverObject.server);
-    return;
-  }
-
-  // Get IPMI password from keychain
-  const password = await keytar.getPassword("rackmanage", credential.credential);
-
-  // Execute IPMI command
   try {
-    const { stderr, stdout } = await execPromise(`ipmitool -H ${credential.address} -U ${credential.username} -P ${password} -p ${credential.port} ${credential.flags} ${command}`);
-    console.error(stderr);
-    console.log(`${command} command sent to`, serverObject.server);
+    // Get server details from database
+    const serverObject: any = await getServer(sqliteDB, server);
 
-    return stdout;
-  } catch (error: any) {
-    // Hide password in error message
-    error.message = error.message.replace(`-P ${password}`, "-P ********")
-    throw new Error(`Error sending ${command} command to ${serverObject.server}: ${error.message}`);
+    if (!serverObject) {
+      console.error("Server not found.");
+      return;
+    }
+
+    // Get IPMI credentials from database
+    const credential: any = await getCredential(sqliteDB, serverObject.id);
+
+    if (!credential) {
+      console.error("IPMI credentials not found for server", serverObject.server);
+      return;
+    }
+
+    // Get IPMI password from keychain
+    const password = await keytar.getPassword("rackmanage", credential.credential);
+
+    // Execute IPMI command
+    try {
+      const { stderr, stdout } = await execPromise(`ipmitool -H ${credential.address} -U ${credential.username} -P ${password} -p ${credential.port} ${credential.flags} ${command}`);
+      console.error(stderr);
+      console.log(`${command} command sent to`, serverObject.server);
+
+      return stdout;
+    } catch (error: any) {
+      // Hide password in error message
+      error.message = error.message.replace(`-P ${password}`, "-P ********")
+      throw new Error(`Error sending ${command} command to ${serverObject.server}: ${error.message}`);
+    }
+  } finally {
+    await closeDb(sqliteDB);
   }
 }
 
@@ -90,6 +103,7 @@ async function processIpmiCommands(commands: any) {
         await updateCommandStatus(command, "complete");
       } catch {
         console.error("Error sending chassis identify command to", command.server);
+        await updateCommandStatus(command, "error");
       }
     }
   }));

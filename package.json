@@ -1,5 +1,5 @@
 {
-  "name": "rmagent",
+  "name": "rackmanage",
   "version": "0.0.3",
   "description": "Rack Manage CLI agent for monitoring and interacting with on-premises equipment",
   "homepage": "https://github.com/RackManage/agent",
@@ -10,7 +10,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "rmagent": "./bin/run.js"
+    "rackmanage": "./bin/run.js"
   },
   "files": [
     "/bin",
@@ -21,7 +21,7 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b && yarn run copyassets",
     "copyassets": "copyfiles -u 1 src/**/*.tpl dist",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint src --ext .ts",
     "prepack": "yarn run build && oclif manifest && shx rm -rf docs && oclif readme --multi",
     "pretarball": "ts-node --transpile-only ../../scripts/sign-for-notarization.ts",
     "postpack": "shx rm -f oclif.manifest.json",
@@ -31,7 +31,7 @@
     "version": "shx rm -rf docs && oclif readme --multi && git add README.md"
   },
   "oclif": {
-    "bin": "rmagent",
+    "bin": "rackmanage",
     "commands": "./dist/commands",
     "dirname": "RackManage",
     "plugins": [
@@ -56,7 +56,7 @@
       }
     },
     "macos": {
-      "identifier": "io.rackmanage.rmagent",
+      "identifier": "io.rackmanage.agent",
       "sign": "\"Developer ID Installer: Carter Roeser (87D84YS9QF)\""
     },
     "windows": {
@@ -79,48 +79,46 @@
     "theme": "theme.json"
   },
   "dependencies": {
-    "@oclif/core": "^3",
-    "@oclif/plugin-help": "^6",
-    "@oclif/plugin-not-found": "^3.1.1",
-    "@oclif/plugin-update": "^4.2.3",
-    "@oclif/plugin-version": "^2.0.16",
-    "@oclif/plugin-warn-if-update-available": "^3.0.15",
+    "@oclif/core": "^4.10.5",
+    "@oclif/plugin-help": "^6.2.44",
+    "@oclif/plugin-not-found": "^3.2.80",
+    "@oclif/plugin-update": "^4.7.32",
+    "@oclif/plugin-version": "^2.2.42",
+    "@oclif/plugin-warn-if-update-available": "^3.1.60",
     "cli-table": "^0.3.11",
-    "cli-table3": "^0.6.4",
-    "firebase": "^10.10.0",
-    "jsonwebtoken": "^9.0.2",
+    "cli-table3": "^0.6.5",
+    "firebase": "^12.12.1",
+    "jsonwebtoken": "^9.0.3",
     "keytar": "^7.9.0",
-    "needle": "^3.3.1",
     "ping-monitor": "^0.8.2",
     "promptly": "^3.2.0",
-    "sqlite3": "^5.1.7",
-    "winreg": "1.2.4"
+    "sqlite3": "^6.0.1",
+    "winreg": "^1.2.5"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^3",
-    "@types/chai": "^4",
-    "@types/klaw": "^3.0.6",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20",
+    "@oclif/test": "^4.1.18",
+    "@types/chai": "^5.2.3",
+    "@types/klaw": "^3.0.7",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22",
     "@types/promptly": "^3.0.5",
-    "@types/which": "^3.0.3",
-    "chai": "^5.1.0",
+    "@types/which": "^3.0.4",
+    "chai": "^6.2.2",
     "copyfiles": "^2.4.1",
-    "eslint": "^8.57.0",
-    "eslint-config-oclif": "^5",
-    "eslint-config-oclif-typescript": "^3",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint": "^10.2.1",
+    "eslint-config-oclif": "^6.0.159",
+    "eslint-config-prettier": "^10.1.8",
     "klaw": "^4.1.0",
-    "mocha": "^10",
-    "oclif": "^4",
-    "shx": "^0.3.4",
+    "mocha": "^11.7.5",
+    "oclif": "^4.23.0",
+    "shx": "^0.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "which": "^4.0.0"
+    "typescript": "^6.0.3",
+    "which": "^6.0.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

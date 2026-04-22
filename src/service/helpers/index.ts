@@ -1,7 +1,7 @@
-const os = require("node:os");
-const util = require("node:util");
 const { exec } = require("node:child_process");
-const execPromise = util.promisify(exec);
+const os = require("node:os");
+const { promisify } = require("node:util");
+const execPromise = promisify(exec);
 const fs = require("node:fs");
 const fsPromises = fs.promises;
 const path = require("node:path");
@@ -9,8 +9,31 @@ const Registry = require("winreg");
 
 import { dataPath } from "../../db/paths"
 
+async function windowsSystemServiceInstalled(systemPath: string) {
+  const wrapperPath = path.join(systemPath, "rmservice.exe");
+
+  if (!fs.existsSync(wrapperPath)) {
+    return false;
+  }
+
+  try {
+    const { stdout } = await execPromise(`"${wrapperPath}" status`);
+    return !stdout.includes("NonExistent");
+  } catch {
+    return false;
+  }
+}
+
 async function isAdmin() {
   switch (os.platform()) {
+    case "darwin": {
+      return os.userInfo().uid === 0;
+    }
+
+    case "linux": {
+      return os.userInfo().uid === 0;
+    }
+
     case "win32": {
       return new Promise((resolve, _) => {
         execPromise("net session", (error: any) => {
@@ -23,11 +46,6 @@ async function isAdmin() {
           resolve(false);
         });
       });
-    }
-
-    case "darwin":
-    case "linux": {
-      return os.userInfo().uid === 0;
     }
 
     default: {
@@ -89,16 +107,16 @@ async function recursiveChown(dirPath: string, uid: number, gid: number) {
 function userServicePath() {
   const { userPath } = dataPath();
   switch (os.platform()) {
-    case "win32": {
-      return userPath;
-    }
-
     case "darwin": {
       return path.join(os.homedir(), "Library", "LaunchAgents");
     }
 
     case "linux": {
       return path.join(os.homedir(), ".config/systemd/user");
+    }
+
+    case "win32": {
+      return userPath;
     }
 
     default: {
@@ -110,16 +128,16 @@ function userServicePath() {
 function systemServicePath() {
   const { systemPath } = dataPath();
   switch (os.platform()) {
-    case "win32": {
-      return systemPath;
-    }
-
     case "darwin": {
       return path.join("/", "Library", "LaunchDaemons");
     }
 
     case "linux": {
       return "/etc/systemd/system";
+    }
+
+    case "win32": {
+      return systemPath;
     }
 
     default: {
@@ -130,10 +148,42 @@ function systemServicePath() {
 
 async function serviceInstalled() {
   switch (os.platform()) {
+    case "darwin": {
+      if (
+        fs.existsSync(
+          path.join(userServicePath(), "io.rackmanage.agent.plist")
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        fs.existsSync(
+          path.join(systemServicePath(), "io.rackmanage.agent.plist")
+        )
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    case "linux": {
+      if (fs.existsSync(path.join(userServicePath(), "rackmanage.service"))) {
+        return true;
+      }
+
+      if (fs.existsSync(path.join(systemServicePath(), "rackmanage.service"))) {
+        return true;
+      }
+
+      return false;
+    }
+
     case "win32": {
       const regKey = new Registry({
         hive: Registry.HKCU,
-        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        key: String.raw`\Software\Microsoft\Windows\CurrentVersion\Run`,
       });
 
       const regCheck = await new Promise((resolve, _) => {
@@ -150,39 +200,7 @@ async function serviceInstalled() {
         return true;
       }
 
-      if (fs.existsSync(path.join(systemServicePath(), "rmservice.exe"))) {
-        return true;
-      }
-
-      return false;
-    }
-
-    case "darwin": {
-      if (
-        fs.existsSync(
-          path.join(userServicePath(), "io.rackmanage.rmagent.plist")
-        )
-      ) {
-        return true;
-      }
-
-      if (
-        fs.existsSync(
-          path.join(systemServicePath(), "io.rackmanage.rmagent.plist")
-        )
-      ) {
-        return true;
-      }
-
-      return false;
-    }
-
-    case "linux": {
-      if (fs.existsSync(path.join(userServicePath(), "rmagent.service"))) {
-        return true;
-      }
-
-      if (fs.existsSync(path.join(systemServicePath(), "rmagent.service"))) {
+      if (await windowsSystemServiceInstalled(systemServicePath())) {
         return true;
       }
 

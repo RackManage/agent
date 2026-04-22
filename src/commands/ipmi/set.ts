@@ -52,11 +52,9 @@ async function setIpmi(flags: any) {
 
 export default class Set extends Command {
   static description = 'Set IPMI account for a server'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
-
   static flags = {
     address: Flags.string({char: 'a', description: 'IPMI address'}),
     flags: Flags.string({char: 'f', description: 'Extra ipmitool flags'}),

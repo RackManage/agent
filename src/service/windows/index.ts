@@ -1,7 +1,7 @@
-const path = require("node:path");
-const util = require('node:util');
 const { exec } = require("node:child_process");
-const execPromise = util.promisify(exec);
+const path = require("node:path");
+const { promisify } = require('node:util');
+const execPromise = promisify(exec);
 const fs = require("node:fs");
 const Registry = require("winreg");
 
@@ -15,13 +15,28 @@ import {
   serviceInstalled,
 } from "../helpers"
 
+async function systemServiceRegistered(systemPath: string) {
+  const wrapperPath = path.join(systemPath, "rmservice.exe");
+
+  if (!fs.existsSync(wrapperPath)) {
+    return false;
+  }
+
+  try {
+    const { stdout } = await execPromise(`"${wrapperPath}" status`);
+    return !stdout.includes("NonExistent");
+  } catch {
+    return false;
+  }
+}
+
 async function installService(root: string, mode: string) {
   const {  systemPath } = dataPath();
 
   let targetProcess = null;
 
-  if (fs.existsSync(path.join(root, "bin", "rmagent.cmd"))) {
-    targetProcess = path.join(root, "bin", "rmagent.cmd");
+  if (fs.existsSync(path.join(root, "bin", "rackmanage.cmd"))) {
+    targetProcess = path.join(root, "bin", "rackmanage.cmd");
   } else if (fs.existsSync(path.join(root, "bin", "run.cmd"))) {
     targetProcess = path.join(root, "bin", "run.cmd");
   } else {
@@ -34,7 +49,7 @@ async function installService(root: string, mode: string) {
       // Check if service is already installed
       const regKey = new Registry({
         hive: Registry.HKCU,
-        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        key: String.raw`\Software\Microsoft\Windows\CurrentVersion\Run`,
       });
 
       const regCheck = await new Promise((resolve, _) => {
@@ -68,7 +83,7 @@ async function installService(root: string, mode: string) {
         return;
       }
 
-      if (fs.existsSync(path.join(systemPath, "rmservice.exe"))) {
+      if (await systemServiceRegistered(systemPath)) {
         console.log("Service already installed");
         return;
       }
@@ -125,7 +140,7 @@ async function uninstallService() {
       // Remove the service from the registry
       const regKey = new Registry({
         hive: Registry.HKCU,
-        key: "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        key: String.raw`\Software\Microsoft\Windows\CurrentVersion\Run`,
       });
       
       regKey.remove("RackManage", (err: any) => {

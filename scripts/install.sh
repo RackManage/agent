@@ -25,22 +25,22 @@
     # If we're on a version of apt that supports signed-by, use it
     if dpkg --compare-versions "\$APT_VERSION" ge "\$MIN_VERSION"; then
         if ! grep -q "^deb https://agent.rackmanage.io/apt ./$" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-            echo "deb [signed-by=/usr/share/keyrings/rmagent.gpg] https://agent.rackmanage.io/apt ./" | tee /etc/apt/sources.list.d/rmagent.list
-            curl -sL https://agent.rackmanage.io/apt/Release.key -o /usr/share/keyrings/rmagent.gpg
+            echo "deb [signed-by=/usr/share/keyrings/rackmanage.gpg] https://agent.rackmanage.io/apt ./" | tee /etc/apt/sources.list.d/rackmanage.list
+            curl -sL https://agent.rackmanage.io/apt/Release.key -o /usr/share/keyrings/rackmanage.gpg
         fi
     else
         if ! grep -q "^deb https://agent.rackmanage.io/apt ./$" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-            echo "deb https://agent.rackmanage.io/apt ./" | tee /etc/apt/sources.list.d/rmagent.list
+            echo "deb https://agent.rackmanage.io/apt ./" | tee /etc/apt/sources.list.d/rackmanage.list
             curl -sL https://agent.rackmanage.io/apt/Release.key | apt-key add -
         fi
     fi
 
     apt-get update
-    apt-get install -y libsecret-1-dev ipmitool rmagent
+    apt-get install -y libsecret-1-dev ipmitool rackmanage
 
 SCRIPT
 
-  LOCATION=$(which rmagent)
-  echo "rmagent installed to $LOCATION"
-  rmagent version
+  LOCATION=$(which rackmanage)
+  echo "rackmanage installed to $LOCATION"
+  rackmanage version
 }

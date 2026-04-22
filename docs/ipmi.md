@@ -1,37 +1,36 @@
-`rmagent ipmi`
-==============
+`rackmanage ipmi`
+=================
 
 Manage IPMI settings for servers
 
-* [`rmagent ipmi list`](#rmagent-ipmi-list)
-* [`rmagent ipmi set`](#rmagent-ipmi-set)
-* [`rmagent ipmi test`](#rmagent-ipmi-test)
+* [`rackmanage ipmi list`](#rackmanage-ipmi-list)
+* [`rackmanage ipmi set`](#rackmanage-ipmi-set)
+* [`rackmanage ipmi test`](#rackmanage-ipmi-test)
 
-## `rmagent ipmi list`
+## `rackmanage ipmi list`
 
 List IPMI accounts
 
 ```
 USAGE
-  $ rmagent ipmi list
+  $ rackmanage ipmi list
 
 DESCRIPTION
   List IPMI accounts
 
 EXAMPLES
-  $ rmagent ipmi list
+  $ rackmanage ipmi list
 ```
 
 _See code: [src/commands/ipmi/list.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/list.ts)_
 
-## `rmagent ipmi set`
+## `rackmanage ipmi set`
 
 Set IPMI account for a server
 
 ```
 USAGE
-  $ rmagent ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u
-    <value>]
+  $ rackmanage ipmi set [-a <value>] [-f <value>] [-p <value>] [-p <value>] [-s <value>] [-u <value>]
 
 FLAGS
   -a, --address=<value>   IPMI address
@@ -45,18 +44,18 @@ DESCRIPTION
   Set IPMI account for a server
 
 EXAMPLES
-  $ rmagent ipmi set
+  $ rackmanage ipmi set
 ```
 
 _See code: [src/commands/ipmi/set.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/set.ts)_
 
-## `rmagent ipmi test`
+## `rackmanage ipmi test`
 
 Test IPMI connection
 
 ```
 USAGE
-  $ rmagent ipmi test [-s <value>]
+  $ rackmanage ipmi test [-s <value>]
 
 FLAGS
   -s, --server=<value>  Server address
@@ -65,7 +64,7 @@ DESCRIPTION
   Test IPMI connection
 
 EXAMPLES
-  $ rmagent ipmi test
+  $ rackmanage ipmi test
 ```
 
 _See code: [src/commands/ipmi/test.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/ipmi/test.ts)_

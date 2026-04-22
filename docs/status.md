@@ -1,23 +1,23 @@
-`rmagent status`
-================
+`rackmanage status`
+===================
 
 Check the status of the agent
 
-* [`rmagent status`](#rmagent-status)
+* [`rackmanage status`](#rackmanage-status)
 
-## `rmagent status`
+## `rackmanage status`
 
 Check the status of the agent
 
 ```
 USAGE
-  $ rmagent status
+  $ rackmanage status
 
 DESCRIPTION
   Check the status of the agent
 
 EXAMPLES
-  $ rmagent status
+  $ rackmanage status
 ```
 
 _See code: [src/commands/status.ts](https://github.com/RackManage/agent/blob/v0.0.3/src/commands/status.ts)_

@@ -6,7 +6,6 @@ import { checkAndRefreshToken } from '../../firebase/auth'
 
 export default class List extends Command {
   static description = 'List IPMI accounts'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
@@ -18,7 +17,7 @@ export default class List extends Command {
     const credentials: any = await getCredentials(db);
     
     if (credentials.length === 0) {
-      console.log("No IPMI credentials found. Use `rmagent ipmi set` to add IPMI accounts.");
+      console.log("No IPMI credentials found. Use `rackmanage ipmi set` to add IPMI accounts.");
       await closeDb(db);
       return;
     }

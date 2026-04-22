@@ -38,26 +38,26 @@ if ($promote -and $promote -notin @("beta", "stable")) {
 }
 
 # Download the installer binaries from S3 to temp directory
-$installerDir = "$env:TEMP\rmagent-installers"
+$installerDir = "$env:TEMP\rackmanage-installers"
 
 Write-Host "Downloading installer binaries for version $version..."
-aws s3 sync s3://rmagent/versions/$version/$sha/ $installerDir --exclude "*" --include "rmagent-v$version-$sha-x64.exe" --include "rmagent-v$version-$sha-x86.exe"
+aws s3 sync s3://rmagent/versions/$version/$sha/ $installerDir --exclude "*" --include "rackmanage-v$version-$sha-x64.exe" --include "rackmanage-v$version-$sha-x86.exe"
 
 # Sign the installer binaries
 Write-Host "Signing installer binaries..."
-signtool sign /n "Carter Roeser" /fd SHA256 /tr http://time.certum.pl /td sha256 /v $installerDir/rmagent-v$version-$sha-x64.exe $installerDir/rmagent-v$version-$sha-x86.exe
+signtool sign /n "Carter Roeser" /fd SHA256 /tr http://time.certum.pl /td sha256 /v $installerDir/rackmanage-v$version-$sha-x64.exe $installerDir/rackmanage-v$version-$sha-x86.exe
 
 # Upload the signed installer binaries back to S3
 Write-Host "Uploading signed installer binaries..."
-aws s3 sync $installerDir s3://rmagent/versions/$version/$sha/ --exclude "*" --include "rmagent-v$version-$sha-x64.exe" --include "rmagent-v$version-$sha-x86.exe"
+aws s3 sync $installerDir s3://rmagent/versions/$version/$sha/ --exclude "*" --include "rackmanage-v$version-$sha-x64.exe" --include "rackmanage-v$version-$sha-x86.exe"
 
 Write-Host "Signing complete."
 
 # If promote is specified, promote the signed installer to the specified channel
 if ($promote) {
     Write-Host "Promoting signed installer to $promote channel..."
-    aws s3 cp s3://rmagent/versions/$version/$sha/rmagent-v$version-$sha-x64.exe s3://rmagent/channels/$promote/rmagent-x64.exe --copy-props none
-    aws s3 cp s3://rmagent/versions/$version/$sha/rmagent-v$version-$sha-x86.exe s3://rmagent/channels/$promote/rmagent-x86.exe --copy-props none
+    aws s3 cp s3://rmagent/versions/$version/$sha/rackmanage-v$version-$sha-x64.exe s3://rmagent/channels/$promote/rackmanage-x64.exe --copy-props none
+    aws s3 cp s3://rmagent/versions/$version/$sha/rackmanage-v$version-$sha-x86.exe s3://rmagent/channels/$promote/rackmanage-x86.exe --copy-props none
     Write-Host "Promotion complete."
 }
 

@@ -6,7 +6,6 @@ import { manageService } from '../../service'
 
 export default class Start extends Command {
   static description = 'Start the agent service'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]

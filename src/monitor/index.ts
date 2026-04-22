@@ -88,13 +88,18 @@ function sleep(ms: number) {
 
 async function startMonitoring() {
   const db = await openOrCreateDatabase();
-  let servers: any = await getServers(db);
+  const waitForServers = async (): Promise<any> => {
+    const servers: any = await getServers(db);
+    if (servers && servers.length > 0) {
+      return servers;
+    }
 
-  while (servers && servers.length === 0) {
     console.log("No servers found. Sleeping for 5 minutes...");
     await sleep(1000 * 5 * 60);
-    servers = await getServers(db);
-  }
+    return waitForServers();
+  };
+
+  const servers: any = await waitForServers();
 
   for (const server of servers) {
     pingServer(server);

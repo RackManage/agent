@@ -6,7 +6,6 @@ import { checkAndRefreshToken } from '../../firebase/auth'
 
 export default class List extends Command {
   static description = 'List all servers'
-
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
@@ -18,7 +17,7 @@ export default class List extends Command {
     const servers: any = await getServers(db);
     
     if (servers.length === 0) {
-      console.log("No servers found. Use `rmagent server add` to add a server.");
+      console.log("No servers found. Use `rackmanage server add` to add a server.");
       await closeDb(db);
       return;
     }

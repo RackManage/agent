@@ -1,9 +1,10 @@
-import { subscribeToCommands } from "../firebase/realtime";
+import { initAgent, subscribeToCommands } from "../firebase/realtime";
 import { startMonitoring } from "../monitor";
 
 async function startAgent() {
-  subscribeToCommands();
-  startMonitoring();  
+  await initAgent();
+  await subscribeToCommands();
+  await startMonitoring();
 }
 
 export {

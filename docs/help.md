@@ -1,26 +1,26 @@
-`rmagent help`
-==============
+`rackmanage help`
+=================
 
-Display help for rmagent.
+Display help for rackmanage.
 
-* [`rmagent help [COMMAND]`](#rmagent-help-command)
+* [`rackmanage help [COMMAND]`](#rackmanage-help-command)
 
-## `rmagent help [COMMAND]`
+## `rackmanage help [COMMAND]`
 
-Display help for rmagent.
+Display help for rackmanage.
 
 ```
 USAGE
-  $ rmagent help [COMMAND...] [-n]
+  $ rackmanage help [COMMAND...] [-n]
 
 ARGUMENTS
-  COMMAND...  Command to show help for.
+  [COMMAND...]  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for rmagent.
+  Display help for rackmanage.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.20/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.44/src/commands/help.ts)_

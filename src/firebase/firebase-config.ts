@@ -2,10 +2,9 @@ const { initializeApp } = require("firebase/app");
 const { getAuth } = require("firebase/auth");
 const { getDatabase } = require("firebase/database");
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyCsCzpR06sMBY8JMroIacQDmyI95Zo-E3A",
-  appId: "1:60597853671:web:84556e8cd5b0908a937142",
-  authDomain: "auth.rackmanage.com",
+  authDomain: "auth.rackmanage.io",
   databaseURL: "https://rmagent.firebaseio.com",
   projectId: "rackmanage",
 };

@@ -1,104 +1,150 @@
-const needle = require('needle');
 const { onValue, ref } = require("firebase/database");
 
-import { closeDb, getConfigData, openOrCreateDatabase } from "../db"
+import { closeDb, openOrCreateDatabase } from "../db"
 import { processIpmiCommands } from "../ipmi"
+import { ensureFirebaseSession } from "./auth"
 import { auth, db } from "./firebase-config"
-
+import { agentPresencePath, commandsPath, getRealtimeContext, monitorPath } from "./paths"
+import { firebaseJsonRequest } from "./rest"
 
 async function initAgent() {
-  if (!auth.currentUser) {
-    return;
-  }
-
   const sqliteDB = await openOrCreateDatabase();
-  const teamId = await getConfigData(sqliteDB, "teamId");
-  const clientId = await getConfigData(sqliteDB, "clientId");
-  const authToken = await auth.currentUser.getIdToken();
 
-  needle('put', `https://rmagent.firebaseio.com/users/${auth.currentUser.uid}/agents/${clientId}.json?auth=${authToken}`,
-  {
-    clientId,
-    lastConnected: Date.now(),
-    teamId,
-    version: "0.0.1",
-  }, 
-  { json: true });
+  try {
+    if (!(await ensureFirebaseSession(sqliteDB, false)) || !auth.currentUser) {
+      return;
+    }
 
-  await closeDb(sqliteDB);
+    const context = await getRealtimeContext(sqliteDB);
+    const authToken = await auth.currentUser.getIdToken();
+
+    await firebaseJsonRequest("PUT", agentPresencePath(context), authToken, {
+      agentUid: context.agentUid,
+      clientId: context.clientId,
+      lastConnected: Date.now(),
+      version: require("../../package.json").version,
+      workspaceId: context.workspaceId,
+      workspaceType: context.workspaceType,
+    });
+  } finally {
+    await closeDb(sqliteDB);
+  }
 }
 
 async function deleteAgent() {
-  if (!auth.currentUser) {
-    console.log("Not logged in")
-    return;
-  }
-
   const sqliteDB = await openOrCreateDatabase();
-  const clientId = await getConfigData(sqliteDB, "clientId");
-  const authToken = await auth.currentUser.getIdToken();
 
-  await needle('delete', `https://rmagent.firebaseio.com/users/${auth.currentUser.uid}/agents/${clientId}.json?auth=${authToken}`);
+  try {
+    if (!(await ensureFirebaseSession(sqliteDB, false)) || !auth.currentUser) {
+      return;
+    }
 
-  await closeDb(sqliteDB);
+    const context = await getRealtimeContext(sqliteDB);
+    const authToken = await auth.currentUser.getIdToken();
+    await firebaseJsonRequest("DELETE", agentPresencePath(context), authToken);
+  } finally {
+    await closeDb(sqliteDB);
+  }
 }
 
 async function updateStatus(status: any) {
-  if (!auth.currentUser) {
-    return;
+  const sqliteDB = await openOrCreateDatabase();
+
+  try {
+    if (!(await ensureFirebaseSession(sqliteDB, false)) || !auth.currentUser) {
+      return;
+    }
+
+    const context = await getRealtimeContext(sqliteDB);
+    const authToken = await auth.currentUser.getIdToken();
+    await firebaseJsonRequest("PUT", monitorPath(context, status.id), authToken, {
+      agentUid: context.agentUid,
+      clientId: context.clientId,
+      date: Date.now(),
+      mode: status.mode,
+      name: status.name,
+      port: status.port,
+      server: status.server,
+      status: status.status,
+      workspaceId: context.workspaceId,
+      workspaceType: context.workspaceType,
+    });
+  } finally {
+    await closeDb(sqliteDB);
+  }
+}
+
+function normalizeCommands(data: any) {
+  if (!data) {
+    return [];
   }
 
-  const sqliteDB = await openOrCreateDatabase();
-  const clientId = await getConfigData(sqliteDB, "clientId");
-  const authToken = await auth.currentUser.getIdToken();
+  if (Array.isArray(data)) {
+    return data.flatMap((command, index) => {
+      if (!command) {
+        return [];
+      }
 
-  await needle('put', `https://rmagent.firebaseio.com/users/${auth.currentUser.uid}/monitor/${status.id}.json?auth=${authToken}`,
-  {
-    clientId,
-    date: Date.now(),
-    mode: status.mode,
-    name: status.name,
-    port: status.port,
-    server: status.server,
-    status: status.status,
-  }, 
-  { json: true });
+      return [{
+        id: `${index}`,
+        ...command,
+      }];
+    });
+  }
 
-  await closeDb(sqliteDB);
+  return Object.entries(data).flatMap(([id, command]) => {
+    if (!command || typeof command !== "object") {
+      return [];
+    }
+
+    return [{
+      id,
+      ...(command as object),
+    }];
+  });
 }
 
 async function subscribeToCommands() {
-  if (!auth.currentUser) {
-    return;
-  }
-
   const sqliteDB = await openOrCreateDatabase();
-  const clientId = await getConfigData(sqliteDB, "clientId");
-  const commandRef = ref(db, `users/${auth.currentUser.uid}/commands`);
 
-  console.log("Subscribed to commands");
+  try {
+    if (!(await ensureFirebaseSession(sqliteDB, false)) || !auth.currentUser) {
+      return;
+    }
 
-  const ipmiCommands: any[] = [];
+    const context = await getRealtimeContext(sqliteDB);
+    const commandRef = ref(db, commandsPath(context));
+    const inFlightCommandIds = new Set<string>();
 
-  onValue(commandRef, (snapshot: any) => {
-    const data = snapshot.val();
-    if (data && Array.isArray(data) && data.length > 0) {
-      for (const command of data) {
-        if (command && command.status === "new" && command.type === "ipmi" && command.clientId === clientId) {
-          ipmiCommands.push({
-            id: data.indexOf(command),
-            ...command,
-          })
+    console.log("Subscribed to commands");
+
+    onValue(commandRef, async (snapshot: any) => {
+      const commands = normalizeCommands(snapshot.val())
+        .filter((command: any) => (
+          command.status === "new" &&
+          command.type === "ipmi" &&
+          !inFlightCommandIds.has(command.id)
+        ));
+
+      if (commands.length === 0) {
+        return;
+      }
+
+      for (const command of commands) {
+        inFlightCommandIds.add(command.id);
+      }
+
+      try {
+        await processIpmiCommands(commands);
+      } finally {
+        for (const command of commands) {
+          inFlightCommandIds.delete(command.id);
         }
       }
-
-      if (ipmiCommands.length > 0) {
-        processIpmiCommands(ipmiCommands);
-      }
-    }
-  });
-
-  await closeDb(sqliteDB);
+    });
+  } finally {
+    await closeDb(sqliteDB);
+  }
 }
 
 export {
