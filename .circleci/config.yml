@@ -391,86 +391,58 @@ jobs:
                   aws s3 cp Release.key s3://rmagent/apt/Release.key
 
 workflows:
-  build_and_release:
+  build_and_release_all:
     when:
-      or:
-        - not:
-            equal: [ "", << pipeline.git.tag >> ]
-        - not:
-            equal: [ "", << pipeline.parameters.channel >> ]
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "all", << pipeline.parameters.release_target >> ]
     jobs:
       - prepare-release:
           manual_release_channel: << pipeline.parameters.channel >>
-
       - pack-windows-tarball:
           name: pack-windows-x64-tarball
           npm_arch: x64
           requires:
             - prepare-release
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
           target: win32-x64
       - pack-windows-installer:
           name: pack-windows-x64-installer
           npm_arch: x64
           requires:
             - pack-windows-x64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
           target: win32-x64
       - promote-windows-release:
           target: win32-x64
           requires:
             - pack-windows-x64-tarball
             - pack-windows-x64-installer
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
-
       - pack-mac-tarball:
           name: pack-mac-x64-tarball
           npm_arch: x64
           requires:
             - prepare-release
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
           target: darwin-x64
       - pack-mac-tarball:
           name: pack-mac-arm64-tarball
           npm_arch: arm64
           requires:
             - prepare-release
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
           target: darwin-arm64
       - pack-mac-installer:
           name: pack-mac-x64-installer
           npm_arch: x64
           requires:
             - pack-mac-x64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
           target: darwin-x64
       - pack-mac-installer:
           name: pack-mac-arm64-installer
           npm_arch: arm64
           requires:
             - pack-mac-arm64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
           target: darwin-arm64
       - promote-mac-release:
           name: promote-mac-x64-release
@@ -478,40 +450,23 @@ workflows:
           requires:
             - pack-mac-x64-tarball
             - pack-mac-x64-installer
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
       - promote-mac-release:
           name: promote-mac-arm64-release
           target: darwin-arm64
           requires:
-            - pack-mac-arm64-installer
             - pack-mac-arm64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
-
+            - pack-mac-arm64-installer
       - pack-linux-tarball:
           name: pack-linux-x64-tarball
           npm_arch: x64
           requires:
             - prepare-release
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "linux-x64", << pipeline.parameters.release_target >> ]
           target: linux-x64
       - pack-linux-tarball:
           name: pack-linux-arm64-tarball
           npm_arch: arm64
           requires:
             - prepare-release
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "linux-arm64", << pipeline.parameters.release_target >> ]
           target: linux-arm64
       - promote-linux-release:
           name: promote-linux-x64-release
@@ -520,10 +475,6 @@ workflows:
           target: linux-x64
           requires:
             - pack-linux-x64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "linux-x64", << pipeline.parameters.release_target >> ]
       - promote-linux-release:
           name: promote-linux-arm64-release
           include_deb: false
@@ -531,7 +482,147 @@ workflows:
           target: linux-arm64
           requires:
             - pack-linux-arm64-tarball
-          when:
-            or:
-              - equal: [ "all", << pipeline.parameters.release_target >> ]
-              - equal: [ "linux-arm64", << pipeline.parameters.release_target >> ]
+
+  build_and_release_win32_x64:
+    when:
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-windows-tarball:
+          name: pack-windows-x64-tarball
+          npm_arch: x64
+          requires:
+            - prepare-release
+          target: win32-x64
+      - pack-windows-installer:
+          name: pack-windows-x64-installer
+          npm_arch: x64
+          requires:
+            - pack-windows-x64-tarball
+          target: win32-x64
+      - promote-windows-release:
+          target: win32-x64
+          requires:
+            - pack-windows-x64-tarball
+            - pack-windows-x64-installer
+
+  build_and_release_darwin_x64:
+    when:
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-mac-tarball:
+          name: pack-mac-x64-tarball
+          npm_arch: x64
+          requires:
+            - prepare-release
+          target: darwin-x64
+      - pack-mac-installer:
+          name: pack-mac-x64-installer
+          npm_arch: x64
+          requires:
+            - pack-mac-x64-tarball
+          target: darwin-x64
+      - promote-mac-release:
+          name: promote-mac-x64-release
+          target: darwin-x64
+          requires:
+            - pack-mac-x64-tarball
+            - pack-mac-x64-installer
+
+  build_and_release_darwin_arm64:
+    when:
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-mac-tarball:
+          name: pack-mac-arm64-tarball
+          npm_arch: arm64
+          requires:
+            - prepare-release
+          target: darwin-arm64
+      - pack-mac-installer:
+          name: pack-mac-arm64-installer
+          npm_arch: arm64
+          requires:
+            - pack-mac-arm64-tarball
+          target: darwin-arm64
+      - promote-mac-release:
+          name: promote-mac-arm64-release
+          target: darwin-arm64
+          requires:
+            - pack-mac-arm64-tarball
+            - pack-mac-arm64-installer
+
+  build_and_release_linux_x64:
+    when:
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "linux-x64", << pipeline.parameters.release_target >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-linux-tarball:
+          name: pack-linux-x64-tarball
+          npm_arch: x64
+          requires:
+            - prepare-release
+          target: linux-x64
+      - promote-linux-release:
+          name: promote-linux-x64-release
+          include_deb: true
+          npm_arch: x64
+          target: linux-x64
+          requires:
+            - pack-linux-x64-tarball
+
+  build_and_release_linux_arm64:
+    when:
+      and:
+        - or:
+            - not:
+                equal: [ "", << pipeline.git.tag >> ]
+            - not:
+                equal: [ "", << pipeline.parameters.channel >> ]
+        - equal: [ "linux-arm64", << pipeline.parameters.release_target >> ]
+    jobs:
+      - prepare-release:
+          manual_release_channel: << pipeline.parameters.channel >>
+      - pack-linux-tarball:
+          name: pack-linux-arm64-tarball
+          npm_arch: arm64
+          requires:
+            - prepare-release
+          target: linux-arm64
+      - promote-linux-release:
+          name: promote-linux-arm64-release
+          include_deb: false
+          npm_arch: arm64
+          target: linux-arm64
+          requires:
+            - pack-linux-arm64-tarball
