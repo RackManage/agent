@@ -22,11 +22,16 @@ commands:
           name: Load Workspace Variables
           command: cat bash.env > $BASH_ENV
       - node/install:
-          install-yarn: true
+          install-yarn: false
           node-version: '22'
       - run:
           name: Check Node Version
           command: node --version
+      - run:
+          name: Enable Corepack Yarn
+          command: |
+            corepack enable
+            yarn --version
 
   install-packages-generic:
     description: "Install Node Packages"
@@ -82,47 +87,6 @@ commands:
             security set-key-partition-list -S apple-tool:,apple: -k "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
             security list-keychains -d user -s $OSX_KEYCHAIN login.keychain
             security find-identity
-
-  save-dist-artifacts:
-    description: "Persist Dist Artifacts for a Target"
-    parameters:
-      family:
-        type: string
-      target:
-        type: string
-    steps:
-      - run:
-          name: Save Dist Artifacts for << parameters.target >>
-          command: |
-            mkdir -p workspace-artifacts/<< parameters.family >>/<< parameters.target >>
-            cp -R dist/. workspace-artifacts/<< parameters.family >>/<< parameters.target >>/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - workspace-artifacts/<< parameters.family >>/<< parameters.target >>
-
-  restore-dist-artifacts:
-    description: "Restore Dist Artifacts for a Family"
-    parameters:
-      family:
-        type: string
-    steps:
-      - run:
-          name: Restore Dist Artifacts for << parameters.family >>
-          command: |
-            rm -rf dist
-            mkdir -p dist
-
-            if [ ! -d workspace-artifacts/<< parameters.family >> ]; then
-              echo "No workspace artifacts found for << parameters.family >>."
-              exit 1
-            fi
-
-            for DIST_DIR in workspace-artifacts/<< parameters.family >>/*; do
-              if [ -d "$DIST_DIR" ]; then
-                cp -R "$DIST_DIR"/. dist/
-              fi
-            done
 
 jobs:
   prepare-release:
@@ -190,32 +154,34 @@ jobs:
           name: Upload Windows Tarball << parameters.target >>
           command: |
             yarn oclif upload tarballs --targets << parameters.target >> --xz
-      - save-dist-artifacts:
-          family: windows
-          target: << parameters.target >>
 
   pack-windows-installer:
+    parameters:
+      npm_arch:
+        type: string
+      target:
+        type: string
     docker:
       - image: cimg/base:stable
     resource_class: medium
     steps:
       - prep-env
       - install-linux-deps
-      - install-packages-generic
-      - restore-dist-artifacts:
-          family: windows
+      - install-packages-targeted:
+          arch: << parameters.npm_arch >>
+          platform: win32
       - run:
-          name: Pack Windows Installer
+          name: Pack Windows Installer << parameters.target >>
           command: |
-            yarn oclif pack win
+            npm_config_arch=<< parameters.npm_arch >> \
+            npm_config_platform=win32 \
+            npm_config_target_arch=<< parameters.npm_arch >> \
+            npm_config_target_platform=win32 \
+            yarn oclif pack win --targets << parameters.target >>
       - run:
-          name: Upload Windows Installer
+          name: Upload Windows Installer << parameters.target >>
           command: |
-            yarn oclif upload win
-      - run:
-          name: Promote Windows Release
-          command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win32-x64
+            yarn oclif upload win --targets << parameters.target >>
 
   pack-mac-tarball:
     parameters:
@@ -239,25 +205,31 @@ jobs:
           name: Upload MacOS Tarball << parameters.target >>
           command: |
             yarn oclif upload tarballs --targets << parameters.target >> --xz
-      - save-dist-artifacts:
-          family: mac
-          target: << parameters.target >>
 
   pack-mac-installer:
+    parameters:
+      npm_arch:
+        type: string
+      target:
+        type: string
     macos:
       xcode: 26.4.0
     steps:
       - prep-env
       - install-macos-certs
-      - install-packages-generic
-      - restore-dist-artifacts:
-          family: mac
+      - install-packages-targeted:
+          arch: << parameters.npm_arch >>
+          platform: darwin
       - run:
-          name: Pack MacOS Installer
+          name: Pack MacOS Installer << parameters.target >>
           command: |
-            yarn oclif pack macos
+            npm_config_arch=<< parameters.npm_arch >> \
+            npm_config_platform=darwin \
+            npm_config_target_arch=<< parameters.npm_arch >> \
+            npm_config_target_platform=darwin \
+            yarn oclif pack macos --targets << parameters.target >>
       - run:
-          name: Notarize MacOS Installer
+          name: Notarize MacOS Installer << parameters.target >>
           command: |
             xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
 
@@ -281,13 +253,9 @@ jobs:
                 fi
             done
       - run:
-          name: Upload MacOS Installer
+          name: Upload MacOS Installer << parameters.target >>
           command: |
-            yarn oclif upload macos
-      - run:
-          name: Promote MacOS Release
-          command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets darwin-x64,darwin-arm64
+            yarn oclif upload macos --targets << parameters.target >>
 
   pack-linux-tarball:
     parameters:
@@ -312,9 +280,27 @@ jobs:
           name: Upload Linux Tarball << parameters.target >>
           command: |
             yarn oclif upload tarballs --targets << parameters.target >> --xz
-      - save-dist-artifacts:
-          family: linux
-          target: << parameters.target >>
+
+  promote-windows-release:
+    docker:
+      - image: cimg/base:stable
+    resource_class: medium
+    steps:
+      - prep-env
+      - run:
+          name: Promote Windows Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win32-x64
+
+  promote-mac-release:
+    macos:
+      xcode: 26.4.0
+    steps:
+      - prep-env
+      - run:
+          name: Promote MacOS Release
+          command: |
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets darwin-x64,darwin-arm64
 
   promote-linux-release:
     docker:
@@ -396,8 +382,15 @@ workflows:
             - prepare-release
           target: win32-x64
       - pack-windows-installer:
+          name: pack-windows-x64-installer
+          npm_arch: x64
           requires:
             - pack-windows-x64-tarball
+          target: win32-x64
+      - promote-windows-release:
+          requires:
+            - pack-windows-x64-tarball
+            - pack-windows-x64-installer
 
       - pack-mac-tarball:
           name: pack-mac-x64-tarball
@@ -412,9 +405,23 @@ workflows:
             - prepare-release
           target: darwin-arm64
       - pack-mac-installer:
+          name: pack-mac-x64-installer
+          npm_arch: x64
+          requires:
+            - pack-mac-x64-tarball
+          target: darwin-x64
+      - pack-mac-installer:
+          name: pack-mac-arm64-installer
+          npm_arch: arm64
+          requires:
+            - pack-mac-arm64-tarball
+          target: darwin-arm64
+      - promote-mac-release:
           requires:
             - pack-mac-x64-tarball
             - pack-mac-arm64-tarball
+            - pack-mac-x64-installer
+            - pack-mac-arm64-installer
 
       - pack-linux-tarball:
           name: pack-linux-x64-tarball
