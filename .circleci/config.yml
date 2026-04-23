@@ -5,6 +5,10 @@ parameters:
     type: string
     default: ""
     description: Release channel to publish to. "stable" or "beta".
+  release_target:
+    type: string
+    default: "all"
+    description: Release target to build. One of "all", "win32-x64", "darwin-x64", "darwin-arm64", "linux-x64", or "linux-arm64".
 
 orbs:
   node: circleci/node@5.0.2
@@ -284,6 +288,9 @@ jobs:
             yarn oclif upload tarballs --targets << parameters.target >> --xz
 
   promote-windows-release:
+    parameters:
+      target:
+        type: string
     docker:
       - image: cimg/base:stable
     resource_class: medium
@@ -291,22 +298,33 @@ jobs:
       - prep-env
       - install-packages-generic
       - run:
-          name: Promote Windows Release
+          name: Promote Windows Release << parameters.target >>
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets win32-x64
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --win --targets << parameters.target >>
 
   promote-mac-release:
+    parameters:
+      target:
+        type: string
     macos:
       xcode: 26.4.0
     steps:
       - prep-env
       - install-packages-generic
       - run:
-          name: Promote MacOS Release
+          name: Promote MacOS Release << parameters.target >>
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets darwin-x64,darwin-arm64
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --macos --targets << parameters.target >>
 
   promote-linux-release:
+    parameters:
+      include_deb:
+        type: boolean
+        default: false
+      npm_arch:
+        type: string
+      target:
+        type: string
     docker:
       - image: cimg/base:stable
     resource_class: medium
@@ -314,15 +332,16 @@ jobs:
       - prep-env
       - install-linux-deps
       - install-packages-targeted:
-          arch: x64
+          arch: << parameters.npm_arch >>
           platform: linux
       - run:
-          name: Promote Linux Tarball Release
+          name: Promote Linux Tarball Release << parameters.target >>
           command: |
-            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets linux-x64,linux-arm64
+            yarn oclif promote --channel $RELEASE_CHANNEL --version $RELEASE_VERSION --sha $COMMIT_SHA --indexes --xz --targets << parameters.target >>
       - when:
           condition:
             and:
+              - equal: [ true, << parameters.include_deb >> ]
               - not:
                   equal: [ stable, << pipeline.parameters.channel >> ]
               - equal: [ "", << pipeline.git.tag >> ]
@@ -334,9 +353,13 @@ jobs:
       - when:
           condition:
             or:
-              - not:
-                  equal: [ "", << pipeline.git.tag >> ]
-              - equal: [ stable, << pipeline.parameters.channel >> ]
+              - and:
+                  - equal: [ true, << parameters.include_deb >> ]
+                  - not:
+                      equal: [ "", << pipeline.git.tag >> ]
+              - and:
+                  - equal: [ true, << parameters.include_deb >> ]
+                  - equal: [ stable, << pipeline.parameters.channel >> ]
           steps:
             - aws-cli/install
             - run:
@@ -384,62 +407,131 @@ workflows:
           npm_arch: x64
           requires:
             - prepare-release
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
           target: win32-x64
       - pack-windows-installer:
           name: pack-windows-x64-installer
           npm_arch: x64
           requires:
             - pack-windows-x64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
           target: win32-x64
       - promote-windows-release:
+          target: win32-x64
           requires:
             - pack-windows-x64-tarball
             - pack-windows-x64-installer
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "win32-x64", << pipeline.parameters.release_target >> ]
 
       - pack-mac-tarball:
           name: pack-mac-x64-tarball
           npm_arch: x64
           requires:
             - prepare-release
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
           target: darwin-x64
       - pack-mac-tarball:
           name: pack-mac-arm64-tarball
           npm_arch: arm64
           requires:
             - prepare-release
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
           target: darwin-arm64
       - pack-mac-installer:
           name: pack-mac-x64-installer
           npm_arch: x64
           requires:
             - pack-mac-x64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
           target: darwin-x64
       - pack-mac-installer:
           name: pack-mac-arm64-installer
           npm_arch: arm64
           requires:
             - pack-mac-arm64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
           target: darwin-arm64
       - promote-mac-release:
+          name: promote-mac-x64-release
+          target: darwin-x64
           requires:
             - pack-mac-x64-tarball
-            - pack-mac-arm64-tarball
             - pack-mac-x64-installer
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-x64", << pipeline.parameters.release_target >> ]
+      - promote-mac-release:
+          name: promote-mac-arm64-release
+          target: darwin-arm64
+          requires:
             - pack-mac-arm64-installer
+            - pack-mac-arm64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "darwin-arm64", << pipeline.parameters.release_target >> ]
 
       - pack-linux-tarball:
           name: pack-linux-x64-tarball
           npm_arch: x64
           requires:
             - prepare-release
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "linux-x64", << pipeline.parameters.release_target >> ]
           target: linux-x64
       - pack-linux-tarball:
           name: pack-linux-arm64-tarball
           npm_arch: arm64
           requires:
             - prepare-release
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "linux-arm64", << pipeline.parameters.release_target >> ]
           target: linux-arm64
       - promote-linux-release:
+          name: promote-linux-x64-release
+          include_deb: true
+          npm_arch: x64
+          target: linux-x64
           requires:
             - pack-linux-x64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "linux-x64", << pipeline.parameters.release_target >> ]
+      - promote-linux-release:
+          name: promote-linux-arm64-release
+          include_deb: false
+          npm_arch: arm64
+          target: linux-arm64
+          requires:
             - pack-linux-arm64-tarball
+          when:
+            or:
+              - equal: [ "all", << pipeline.parameters.release_target >> ]
+              - equal: [ "linux-arm64", << pipeline.parameters.release_target >> ]
