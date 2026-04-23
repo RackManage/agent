@@ -287,6 +287,7 @@ jobs:
     resource_class: medium
     steps:
       - prep-env
+      - install-packages-generic
       - run:
           name: Promote Windows Release
           command: |
@@ -297,6 +298,7 @@ jobs:
       xcode: 26.4.0
     steps:
       - prep-env
+      - install-packages-generic
       - run:
           name: Promote MacOS Release
           command: |
