@@ -76,9 +76,11 @@ commands:
             INSTALLER_CERTIFICATE="${TMPDIR}/installer_certificate.p12"
             APPLICATION_CERTIFICATE="${TMPDIR}/application_certificate.p12"
             OSX_KEYCHAIN="${TMPDIR}/app-signing.keychain-db"
+            echo "export OSX_KEYCHAIN=${OSX_KEYCHAIN}" >> $BASH_ENV
             echo -n "$OSX_INSTALLER_CERT_BASE64" | base64 --decode --output $INSTALLER_CERTIFICATE
             echo -n "$OSX_APPLICATION_CERT_BASE64" | base64 --decode --output $APPLICATION_CERTIFICATE
             OSX_KEYCHAIN_PASSWORD=`openssl rand -hex 12`
+            echo "export OSX_KEYCHAIN_PASSWORD=${OSX_KEYCHAIN_PASSWORD}" >> $BASH_ENV
             security create-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
             security unlock-keychain -p "$OSX_KEYCHAIN_PASSWORD" $OSX_KEYCHAIN
             security set-keychain-settings -lut 21600 $OSX_KEYCHAIN
@@ -231,12 +233,12 @@ jobs:
       - run:
           name: Notarize MacOS Installer << parameters.target >>
           command: |
-            xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID"
+            xcrun notarytool store-credentials new-profile --apple-id "$APPLE_ID" --password "$APPLE_ID_APP_PASSWORD" --team-id "$APPLE_TEAM_ID" --keychain "$OSX_KEYCHAIN"
 
             for FILE_PATH in dist/macos/*.pkg; do
                 echo "Notarizing $FILE_PATH..."
                 pkgutil --check-signature "$FILE_PATH"
-                xcrun notarytool submit "$FILE_PATH" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
+                xcrun notarytool submit "$FILE_PATH" --keychain "$OSX_KEYCHAIN" --keychain-profile new-profile --wait -f json > "${TMPDIR}/notarization_log.json"
                 notarization_status=$(jq -r .status "${TMPDIR}/notarization_log.json")
                 notarization_id=$(jq -r .id "${TMPDIR}/notarization_log.json")
                 echo "For notarization id ${notarization_id} the status is ${notarization_status}"
@@ -247,7 +249,7 @@ jobs:
                   spctl --assess -vv --type install "$FILE_PATH"
                 else
                   echo "Notarization unsuccessful for $FILE_PATH"
-                  xcrun notarytool log ${notarization_id} --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
+                  xcrun notarytool log ${notarization_id} --keychain "$OSX_KEYCHAIN" --keychain-profile new-profile "${TMPDIR}/notarization_log.json"
                   jq . "${TMPDIR}/notarization_log.json"
                   exit 1
                 fi
