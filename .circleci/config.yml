@@ -33,7 +33,7 @@ commands:
     steps:
       - run:
           name: Install Node Packages
-          command: yarn install --frozen-lockfile
+          command: yarn install --frozen-lockfile --network-timeout 600000
 
   install-packages-targeted:
     description: "Install Node Packages for a Specific Target"
@@ -51,7 +51,7 @@ commands:
             npm_config_platform=<< parameters.platform >> \
             npm_config_target_arch=<< parameters.arch >> \
             npm_config_target_platform=<< parameters.platform >> \
-            yarn install --frozen-lockfile
+            yarn install --frozen-lockfile --network-timeout 600000
 
   install-linux-deps:
     description: "Install Linux Packaging Dependencies"
